@@ -25,7 +25,6 @@
 !==============================================================================
 
 module monin_obukhov_kernel
-#include <fms_platform.h>
 
 use monin_obukhov_functions_mod, only: most_functions_T
 
@@ -45,7 +44,7 @@ contains
 ! Kernel routines
 !==============================================================================
 
-_PURE subroutine monin_obukhov_diff(most, vonkarm,                &
+pure subroutine monin_obukhov_diff(most, vonkarm,                &
      & ustar_min,                                     &
      & ni, nj, nk, z, u_star, b_star, k_m, k_h, ier)
   class(most_functions_T), intent(in) :: most
@@ -87,7 +86,7 @@ _PURE subroutine monin_obukhov_diff(most, vonkarm,                &
 end subroutine monin_obukhov_diff
 
 
-_PURE subroutine monin_obukhov_drag_1d(most, grav, vonkarm,      &
+pure subroutine monin_obukhov_drag_1d(most, grav, vonkarm,      &
      & error, zeta_min, max_iter, small,                         &
      & drag_min_heat, drag_min_moist, drag_min_mom,              &
      & n, pt, pt0, z, z0, zt, zq, speed, drag_m, drag_t,         &
@@ -195,7 +194,7 @@ _PURE subroutine monin_obukhov_drag_1d(most, grav, vonkarm,      &
 end subroutine monin_obukhov_drag_1d
 
 
-_PURE subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,  &
+pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,  &
      & n, rich, z, z0, zt, zq, f_m, f_t, f_q, zeta, mask, ier)
   class(most_functions_T), intent(in)     :: most
   real   , intent(in   )                :: error    ! = 1.e-04
@@ -302,7 +301,7 @@ _PURE subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small
 end subroutine monin_obukhov_solve_zeta
 
 
-_PURE subroutine monin_obukhov_profile_1d(most, &
+pure subroutine monin_obukhov_profile_1d(most, &
      vonkarm, &
      & n, zref, zref_t, z, z0, zt, zq, u_star, b_star, q_star, &
      & del_m, del_t, del_q, ier, avail)

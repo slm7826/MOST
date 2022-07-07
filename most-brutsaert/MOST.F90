@@ -1,6 +1,6 @@
 program test
-  use most_functions_mod
-  use monin_obukhov_inter
+  use monin_obukhov_functions_mod
+  use monin_obukhov_kernel
 
   implicit none
   ! constants
@@ -17,7 +17,7 @@ program test
   real   , parameter :: gust_zi = 1000.0 ! m, boundary layer depth for gustiness
 
   ! + namelists
-  character(32) :: most_option = 'stab1'
+  character(32) :: stable_option = '1'
   real    :: rich_crit      = 2.0
   real    :: drag_min_heat  = 1.e-05
   real    :: drag_min_moist = 1.e-05
@@ -26,7 +26,7 @@ program test
   real    :: zeta_trans     = 0.5
   logical :: new_mo_option  = .false.
 
-  namelist /monin_obukhov_nml/ most_option, rich_crit, neutral, drag_min_heat, &
+  namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
                                drag_min_moist, drag_min_mom, zeta_trans
 
   real :: p_atm = 1e5
@@ -48,11 +48,11 @@ program test
   integer :: ios
   integer :: n, i
   real    :: z0s
-  class(most_functions), pointer :: most
+  class(most_functions_T), pointer :: most
 
   ! inputs
   real,    dimension(1) :: pt, z, z0, zt, zq, x
-  logical :: avail(1), lavail
+  logical :: avail(1)
   ! outputs
   real,    dimension(1) :: &
       t_sfc1, t_atm1, u_atm1, rho, flux_t, flux_m, &
@@ -72,19 +72,19 @@ program test
   write(*,*)'RESULTS:'
   write(*,'(a)') 't_sfc,u_atm,flux_t,flux_m,cd_m,cd_t,cd_q,ga,ra,u_star,b_star,rich,zeta,gust,gust+u_atm,ier'
 
-  select case(trim(most_option))
-  case('stab1')
+  select case(trim(stable_option))
+  case('1')
      most=>make_most1_functions(rich_crit)
-  case('stab2')
+  case('2')
      most=>make_most2_functions(rich_crit, zeta_trans)
   case('brutsaert')
      most=>make_brutsaert_functions(rich_crit)
   case default
-     write (*,*)'most_option = "'//trim(most_option)//'" is incorrect'
+     write (*,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
      stop 1
   end select
   z0s = z0m*exp(-k_over_B)
-  n = 1; lavail=.TRUE.; avail = .TRUE.
+  n = 1; avail = .TRUE.
   u_atm1 = u_atm
   t_atm1 = t_atm
   t_sfc1 = t_sfc
@@ -107,10 +107,9 @@ program test
      rho = p_atm / (rdgas * t_atm) ! density
      call monin_obukhov_drag_1d(most, grav, vonkarm,                      &
           & error, zeta_min, max_iter, small,                             &
-          & neutral, &
           & drag_min_heat, drag_min_moist, drag_min_mom,                  &
           & n, t_atm1, t_sfc1, z, z0, zt, zq, u_atm1, cd_m, cd_t,         &
-          & cd_q, u_star, b_star, rich, zeta, lavail, avail, ier)
+          & cd_q, u_star, b_star, rich, zeta, ier, avail)
      ga     = cd_q * rho * u_atm
      ra     = 1.0/(max(ga,1e-6))
      flux_t = cd_t * rho * abs(u_atm1) * cp_air * (t_sfc1 - t_atm1)  ! flux of sensible heat (W/m**2)
