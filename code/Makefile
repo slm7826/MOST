@@ -22,7 +22,6 @@ realclean: clean
 	rm -f input.nml *.out.txt
 
 # dependencies
-monin_obukhov_inter.o : fms_platform.h
 $(EXECUTABLES)        : monin_obukhov_inter.o
 
 # rules
