@@ -582,8 +582,8 @@ pure subroutine brutsaert_deriv_m(this,n,mask,zeta,phi,ier)
   stable   = mask .and. zeta >= 0.0
   unstable = mask .and. zeta <  0.0
 
+  y = -zeta
   where (unstable.and.y <= 1.0/this%b_u**3)
-     y = -zeta
      phi = (this%a_u + this%b_u * y**(4.0/3.0))/(this%a_u + y)
   end where
   where (unstable.and.y > 1.0/this%b_u**3)
