@@ -1,6 +1,7 @@
 \documentclass{article}
-\usepackage{geometry}
-%\usepackage[showframe]{geometry}       % shows frame
+%\usepackage{geometry}
+%\usepackage[hmargin={2cm,3cm},marginparsep=2mm]{geometry}       % shows frame
+\usepackage[showframe,hmargin={3cm,3cm},marginparsep=2mm]{geometry}       % shows frame
 %\usepackage[showframe,pass]{geometry}  % shows frame but does not change page geometry
 
 %\usepackage{ametsoc}
@@ -16,6 +17,7 @@
 
 \usepackage{booktabs}
 \usepackage[notcite,notref]{showkeys}
+%\usepackage{showlabels}
 \usepackage[osf]{mathpazo} % palatino fonts % uncomment for Palatino font
 \usepackage{todonotes}
 %\usepackage[disable]{todonotes} % remove [disable] to see to-do notes
@@ -35,7 +37,7 @@
 
 % typical panel width in multi-panel figures
 \newlength{\panelW}
-\setlength{\panelW}{7cm}
+\setlength{\panelW}{7.8cm}
 
 \captionsetup[subfigure]{position=top,textfont=scriptsize,labelfont=scriptsize,singlelinecheck=false,captionskip=0pt,farskip=2pt,margin=15pt}
 
@@ -45,6 +47,7 @@
 \begin{document}
 \maketitle
 
+\listoffigures
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Basic equations of motion}
 
