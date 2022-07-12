@@ -40,6 +40,9 @@ rightline=false
 \newcommand{\ustar}{\ensuremath{u_*}} % velocity scale
 \newcommand{\bstar}{\ensuremath{b_*}} % buoyancy scale
 \newcommand{\tstar}{\ensuremath{\pt_*}} % buoyancy scale
+\newcommand{\zm}{z_{0m}} % roughness length for momentum
+\newcommand{\zh}{z_{0h}} % roughness length for heat
+\newcommand{\fstab}{\phi} % stability correction
 \newcommand{\rich}{\text{Ri}} % Richardson number
 \newcommand{\rcrit}{\rich_c} % critical Richardson number
 \newcommand{\rbulk}{\rich_b} % bulk Richardson number
@@ -124,54 +127,54 @@ Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was fir
 
 In non-neutral case,
 \begin{equation}\label{eq:u-profile}
-   \frac{\vonkarman z}{\ustar}\pderiv{u}{z} = \phi_m(\zeta)
+   \frac{\vonkarman z}{\ustar}\pderiv{u}{z} = \fstab_m(\zeta)
 \end{equation}
 where
 $\zeta=z/L$,
-$\phi_m$ is stability correction function,
-$\phi_m \to 1$ as $\zeta \to 0$ ro retrieve neutral case.
+$\fstab_m$ is stability correction function,
+$\fstab_m \to 1$ as $\zeta \to 0$ ro retrieve neutral case.
 
 \cite{Held2004} then defines
 \begin{subequations}
 \label{eq:Held-integral}
 \begin{align}
-   F_m(\zeta) & = \int\frac{\phi_m}{\zeta}\,d \zeta \\
-   F_h(\zeta) & = \int\frac{\phi_h}{\zeta}\,d \zeta
+   F_m(\zeta) & = \int\frac{\fstab_m}{\zeta}\,d \zeta \\
+   F_h(\zeta) & = \int\frac{\fstab_h}{\zeta}\,d \zeta
 \end{align}
 \end{subequations}
 to solve \eqref{eq:u-profile} as
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman} \left[
-          F_m\left(\frac{z}{L}\right)-F_m\left(\frac{z_{0m}}{L}\right)
+          F_m\left(\frac{z}{L}\right)-F_m\left(\frac{\zm}{L}\right)
       \right]
 \end{equation}
 
 Other literature, including \cite{Jimenez2012} use equivalent approach to define
 \begin{equation}
-   \psi_m(\zeta) = \int\frac{1-\phi_m(\zeta)}{\zeta}\, d \zeta
+   \psi_m(\zeta) = \int\frac{1-\fstab_m(\zeta)}{\zeta}\, d \zeta
                = \ln(\zeta) - F_m(\zeta)
 \end{equation}
 to get
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman}\left[
-          \ln\left(\frac{z}{z_{0m}}\right) - \psi_m\left(\frac{z}{L}\right) + \psi_m\left(\frac{z_{0m}}{L}\right)
+          \ln\left(\frac{z}{\zm}\right) - \psi_m\left(\frac{z}{L}\right) + \psi_m\left(\frac{\zm}{L}\right)
       \right]
 \end{equation}
 
 Similarly, for temperature
 \begin{equation}\label{eq:b-profile}
-   \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} = \phi_h(\zeta)
+   \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} = \fstab_h(\zeta)
 \end{equation}
 and
 \begin{equation}
    \pt(z) - \pt(0) = \frac{\tstar}{\vonkarman} \left[
-          F_h\left(\frac{z}{L}\right)-F_h\left(\frac{z_{0h}}{L}\right)
+          F_h\left(\frac{z}{L}\right)-F_h\left(\frac{\zh}{L}\right)
       \right]
 \end{equation}
 or
 \begin{equation}
    \pt(z) - \pt(0) = \frac{\tstar}{\vonkarman}\left[
-          \ln\left(\frac{z}{z_{0h}}\right) - \psi_h\left(\frac{z}{L}\right) + \psi_h\left(\frac{z_{0h}}{L}\right)
+          \ln\left(\frac{z}{\zh}\right) - \psi_h\left(\frac{z}{L}\right) + \psi_h\left(\frac{\zh}{L}\right)
       \right]
 \end{equation}
 
@@ -182,7 +185,7 @@ By definition of turbulent diffusion coefficient
 \end{equation}
 and substituting ${\partial u/\partial z}$ from~\eqref{eq:u-profile}
 \begin{equation}
-   K_m = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\phi(\zeta)}
+   K_m = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\fstab_m(\zeta)}
 \end{equation}
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Stability functions}
@@ -193,8 +196,8 @@ In unstable regime ($\zeta < 0$), the stability functions are defined as
 \begin{subequations}
 \label{eq:fms-unstable}
 \begin{align}
-   \phi_m(\zeta) & = (1-16 \zeta)^{-1/4} \\
-   \phi_h(\zeta) & = \begin{cases}
+   \fstab_m(\zeta) & = (1-16 \zeta)^{-1/4} \\
+   \fstab_h(\zeta) & = \begin{cases}
       (1-16\zeta)^{-1/3}, & \text{for new option (Ming Zhao)} \\
       (1-16\zeta)^{-1/2}, & \text{for old option}
    \end{cases}
@@ -204,19 +207,19 @@ Note that the momentum stability function is the same as in \cite{Held2004}
 
 In stable case (for $\zeta>0$)
 \begin{equation}
-   \phi_m(\zeta) = \phi_h(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
+   \fstab_m(\zeta) = \fstab_h(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
 \end{equation}
 
 \subsection{Stable option 2}
 In unstable regime, stability corrections are the same as in stable option 1, equations~\eqref{eq:fms-unstable}. In stable regime
 \begin{equation}
-   \phi_m(\zeta) = \phi_h(\zeta) = \begin{cases}
+   \fstab_m(\zeta) = \fstab_h(\zeta) = \begin{cases}
       1+5\zeta, & \zeta < \zeta_t \\
       1+5 \zeta_t + \frac{\zeta-\zeta_t}{\rcrit}, & \zeta \ge \zeta_t
    \end{cases}
 \end{equation}
 
-Note that in stable case, $\phi_m(\zeta) = \phi_h(\zeta)$, like they were in \cite{Held2004}.
+Note that in stable case, $\fstab_m(\zeta) = \fstab_h(\zeta)$, like they were in \cite{Held2004}.
 
 \subsection{Brutsaert}
 A new stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code, on branch \verb|usr/slm/sfcx|, together with refactoring of the code to make it more manageable and expandable.
@@ -225,34 +228,34 @@ A new stability function proposed in \cite{Brutsaert2005} was introduced in the 
 For unstable case
 \begin{subequations}
 \begin{align}
-    \phi_m(\zeta) & = \begin{cases}
+    \fstab_m(\zeta) & = \begin{cases}
         (a_u+b_u y^{4/3})/(a_u + y), & y \le b_u^{-3} \\
         1,                            & y > b_u^{-3}
     \end{cases}
     \\
-    \phi_h(\zeta) & = (c_u + d_u y^{n_u})/(c_u+y^{n_u})
+    \fstab_h(\zeta) & = (c_u + d_u y^{n_u})/(c_u+y^{n_u})
 \end{align}
 \end{subequations}
 where $y=-\zeta$, $a_u = 0.33$, $b_u = 0.41$, $c_u = 0.33$, $d_u = 0.057$, and $n_u = 0.78$.
 
 In stable case
 \begin{equation}
-    \phi_m(\zeta) = \phi_h(\zeta)
+    \fstab_m(\zeta) = \fstab_h(\zeta)
         = 1 + a_s \frac{\zeta + \zeta^{b_s}(1+\zeta^{b_s})^{-1+1/b_s}}
                        {\zeta + (1+\zeta^{b_s})^{1/b_s}}
 \end{equation}
 with $a_s = 6.1$ and  $b_s = 2.5$.
 
-The complicated form of stable case correction $\phi_x$ is because a relatively simple integral stability function ws postulated first
+The complicated form of stable case correction $\fstab_x$ is because a relatively simple integral stability function ws postulated first
 \begin{equation}
 \Psi_x = -a_s \ln\big[\zeta + (1+\zeta^{b_s})^{1/b_s}\big]
 \end{equation}
-and then then stability corrections $\phi_x$ were obtained by differentiation.
+and then then stability corrections $\fstab_x$ were obtained by differentiation.
 
 \subsection{Typical model settings}
 ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
 
-One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $z_{0m}=z_{0h}$). This feature is even more striking in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $z_{0m}=\SI{2}{m}$, consistent with the values that land model reaches in forests.
+One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $\zm=\zh$). This feature is even more striking in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $\zm=\SI{2}{m}$, consistent with the values that land model reaches in forests.
 
 Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
 
@@ -267,23 +270,23 @@ $z_a$ is the height of the height of the lowest atmospheric layer, and  $\zeta_a
 
 On the other hand, the same bulk Richardson function can be expressed in terms of integral stability functions~\eqref{eq:Held-integral}
 \begin{equation}\label{eq:ribulk}
-    \rbulk = \zeta \frac{F_t(\zeta_a) - F_t(\zeta_a z_{0h}/z_a)}
-        {(F_m(\zeta_a) - F_m(\zeta_a z_{0m}/z_a))^2}
+    \rbulk = \zeta \frac{F_t(\zeta_a) - F_t(\zeta_a \zh/z_a)}
+        {(F_m(\zeta_a) - F_m(\zeta_a \zm/z_a))^2}
 \end{equation}
 where
-$z_{0m}$ is the roughness length of momentum,
-$z_{0h}$ -- roughness length for buoyancy,
+$\zm$ is the roughness length of momentum,
+$\zh$ -- roughness length for buoyancy,
 and
 $\zeta_a = z_a/L$.
 
 Defining, for convenience, function
 \begin{equation}
     F_i(\zeta_1, \zeta_2) = F_i(\zeta_2) - F_i(\zeta_1)
-                          = \int_{\zeta_1}^{\zeta_2} \frac{\phi_i(\zeta)}{\zeta} d \zeta
+                          = \int_{\zeta_1}^{\zeta_2} \frac{\fstab_i(\zeta)}{\zeta} d \zeta
 \end{equation}
 we can rewrite~\eqref{eq:ribulk} as
 \begin{equation}\label{eqzeta}
-    f(\zeta_a) = \zeta_a \frac{F_t(\zeta_a z_{0h}/z_a, \zeta_a)}{F_m(\zeta_a z_{0m}/z_a,\zeta_a)^2} - \rbulk = 0
+    f(\zeta_a) = \zeta_a \frac{F_t(\zeta_a \zh/z_a, \zeta_a)}{F_m(\zeta_a \zm/z_a,\zeta_a)^2} - \rbulk = 0
 \end{equation}
 
 FMS code solves nonlinear equation~\eqref{eqzeta} iteratively, to find the value of $\zeta_a = z_a/L$ that match boundary conditions. The solution procedure follows the Newton method, so on each iteration step, given a guess of $\zeta_0$, the step $\Delta \zeta$ is calculated as
@@ -297,36 +300,41 @@ until its absolute value falls below predefined tolerance.
 
 Noting that
 \begin{equation}
-    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_1} = - \frac{\Phi_i(\zeta_1)}{\zeta_1}, \qquad
-    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_2} = \frac{\Phi_i(\zeta_2)}{\zeta_2}
+    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_1} = - \frac{\fstab_i(\zeta_1)}{\zeta_1}, \qquad
+    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_2} = \frac{\fstab_i(\zeta_2)}{\zeta_2}
 \end{equation}
+\begin{subequations}
 \begin{align}
-\fderiv{f}{\zeta}\notag
-    & =  \frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^2}
-    + \frac{\Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a)}{F_m(\zeta z_0/z_a,\zeta)^2}
-    - 2 \frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^3}(\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a))
+\fderiv{f}{\zeta}
+    & =  \frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
+    + \frac{\fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a)}{F_m(\zeta \zm/z_a,\zeta)^2}
+    - 2 \frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^3}(\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a))
+    \label{eq:Fderiv1}
     \\
-    {} &=  \zeta\frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^2}
+    {} &=  \zeta\frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
         \Bigg[
             \frac{1}{\zeta}
-            + \frac{\Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a)}{\zeta F_t(\zeta z_t/z_a,\zeta)}
-            - 2 \frac{\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a)}{\zeta F_m(\zeta z_0/z_a,\zeta)}
+            + \frac{\fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a)}{\zeta F_t(\zeta \zh/z_a,\zeta)}
+            - 2 \frac{\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a)}{\zeta F_m(\zeta \zm/z_a,\zeta)}
         \Bigg]
+    \label{eq:Fderiv2}
 \end{align}
+\end{subequations}
 
 \begin{mdframed}
 An alternative mathematically equivalent form of equation~\eqref{eqzeta} would be
 \begin{equation}
-    f_1(\zeta) = \zeta F_t(\zeta z_t/z_a, \zeta) - \rbulk F_m(\zeta z_0/z_a,\zeta)^2 = 0
+    f_1(\zeta) = \zeta F_t(\zeta \zh/z_a, \zeta) - \rbulk F_m(\zeta \zm/z_a,\zeta)^2 = 0
 \end{equation}
 so that the derivative of the function would be simpler:
 \begin{equation}
     \begin{split}
-    \fderiv{f_1}{\zeta} & = F_t(\zeta z_t/z_a, \zeta) + \Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a) \\
-    & \qquad \qquad - 2 \rbulk F_m(\zeta z_0/z_a,\zeta) \frac{1}{\zeta} [\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a)]
+    \fderiv{f_1}{\zeta} & = F_t(\zeta \zh/z_a, \zeta) + \fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a) \\
+    & \qquad \qquad - 2 \rbulk F_m(\zeta \zm/z_a,\zeta) \frac{1}{\zeta} [\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a)]
     \end{split}
 \end{equation}
-This is not the expression that the code is using, though. Not sure why, it looks simpler. I don't like the $\zeta$ in the denominator...
+This is not the expression that the code is using, though. Not sure why, it looks simpler.
+The only disadvantage that I can see is that it includes $1/\zeta$ term that may cause problems at $\zeta=0$; the equation~\eqref{eq:Fderiv1} does not, although the code uses the form~\eqref{eq:Fderiv2}.
 \end{mdframed}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -336,7 +344,7 @@ As $u \to 0$, $\ustar \to 0$, and $\zeta \to -\infty$. In this case, vertical pr
 
 To see what is going on, start from equation for vertical profile of buoyancy \eqref{eq:b-profile}:
 \begin{equation*}
-    \frac{\vonkarman z}{\bstar}\pderiv{b}{z} = \phi_h(\zeta)
+    \frac{\vonkarman z}{\bstar}\pderiv{b}{z} = \fstab_h(\zeta)
 \end{equation*}
 Also, from definition of \bstar~\eqref{eq:bstar}
 \begin{equation*}
@@ -348,15 +356,15 @@ and definition of $\zeta$
 \end{equation*}
 we get
 \begin{equation}
-    \pderiv{b}{z} = \frac{\bstar}{\vonkarman z}\phi_h(\zeta)
-    = \frac{\bstar}{\vonkarman z}\phi_h\left(-\frac{z \vonkarman \bstar}{\ustar^2}\right)
-    = \frac{B}{\vonkarman z \rho \ustar }\phi_h
+    \pderiv{b}{z} = \frac{\bstar}{\vonkarman z}\fstab_h(\zeta)
+    = \frac{\bstar}{\vonkarman z}\fstab_h\left(-\frac{z \vonkarman \bstar}{\ustar^2}\right)
+    = \frac{B}{\vonkarman z \rho \ustar }\fstab_h
       \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
 \end{equation}
 
-When the wind is close to zero in non-neutral situation, it is reasonable to assume that the heat flux should not depend on $\ustar$. Therefore, in equation~\eqref{eq:b-profile}, the dependence on $\ustar$ should disappear when wind goes to zero (and, therefore, $\ustar \to 0$ and $\zeta \to \infty$). Suppose $\phi(\zeta) \propto \zeta^n$ for $\zeta \to -\infty$, with some power $n$. Then
+When the wind is close to zero in non-neutral situation, it is reasonable to assume that the heat flux should not depend on $\ustar$. Therefore, in equation~\eqref{eq:b-profile}, the dependence on $\ustar$ should disappear when wind goes to zero (and, therefore, $\ustar \to 0$ and $\zeta \to \infty$). Suppose $\fstab(\zeta) \propto \zeta^n$ for $\zeta \to -\infty$, with some power $n$. Then
 \begin{equation}
-    \frac{B}{\vonkarman z \rho \ustar }\phi_h \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
+    \frac{B}{\vonkarman z \rho \ustar }\fstab_h \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
   = \frac{B}{\vonkarman z \rho \ustar } C \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)^n
   = - C \frac{B^{n+1} z^{n-1} \vonkarman^{n-1}}{\rho^{n+1}} \frac{1}{\ustar^{3n+1}}
 \end{equation}
@@ -372,7 +380,7 @@ For $n < -1/3$, the vertical gradient of buoyancy would tend to zero for finite 
 where $\beta$ is an empirical constant on the order of 1, and
 $z_i$ is the characteristic height of the convective boundary layer \citep{Beljaars1994}. In GFDL models, $z_i$ is assumed to be constant \SI{1000}{m}.
 
-This treatment should ensure the same asymptotic behavior as imposing the above constraint on $\phi_h$ at $\ustar \to -\infty$. However, such approach can only work if calculation of gustiness is embedded within the solution of the implicit equations of heat and momentum balances in the Monin-Obukhov layer. In GFDL model that is not done: rather, gustiness is calculated in the atmosphere based on the flux and stability values from the previous time step. Therefore, I believe there is no guarantee that the surface fluxes produce reasonable solution in convective limit.
+This treatment should ensure the same asymptotic behavior as imposing the above constraint on $\fstab_h$ at $\ustar \to -\infty$. However, such approach can only work if calculation of gustiness is embedded within the solution of the implicit equations of heat and momentum balances in the Monin-Obukhov layer. In GFDL model that is not done: rather, gustiness is calculated in the atmosphere based on the flux and stability values from the previous time step. Therefore, I believe there is no guarantee that the surface fluxes produce reasonable solution in convective limit.
 
 \begin{figure}
    \centering
@@ -389,7 +397,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
   \subfloat[Brutsaert, $k B^{-1}=0$]{
       \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_t.pdf}
   }
-   \caption{Dependence of sensible heat flux on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
+   \caption{Dependence of sensible heat flux on surface temperature, for roughness $\zm=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
    \label{fig:small-z0-sens}
 \end{figure}
 
@@ -408,7 +416,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
+   \caption{Dependence of $\bstar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -426,7 +434,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
+   \caption{Dependence of surface stress on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -444,7 +452,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
+   \caption{Dependence of $\ustar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -463,7 +471,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_t.pdf}
    }
-   \caption{Dependence of sensible heat flux on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of sensible heat flux on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
    \label{fig:large-z0-sens}
 \end{figure}
 
@@ -482,7 +490,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of $\bstar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -500,7 +508,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of surface stress on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -518,7 +526,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of $\ustar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -539,7 +547,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_t.pdf}
    }
 
-   \caption{Dependence of sensible heat flux on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of sensible heat flux on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
    \label{fig:sens-vs-u}
 \end{figure}
 
@@ -559,7 +567,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/b_star.pdf}
    }
 
-   \caption{Dependence of $\bstar$ on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of $\bstar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -578,7 +586,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_m.pdf}
    }
 
-   \caption{Dependence of surface stress on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of surface stress on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -597,7 +605,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/u_star.pdf}
    }
 
-   \caption{Dependence of $\ustar$ on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
+   \caption{Dependence of $\ustar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
