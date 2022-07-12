@@ -60,6 +60,8 @@ rightline=false
 \maketitle
 
 \listoffigures
+\tableofcontents
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Basic equations of motion}
 
@@ -222,7 +224,7 @@ In unstable regime, stability corrections are the same as in stable option 1, eq
 Note that in stable case, $\fstab_m(\zeta) = \fstab_h(\zeta)$, like they were in \cite{Held2004}.
 
 \subsection{Brutsaert}
-A new stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code, on branch \verb|usr/slm/sfcx|, together with refactoring of the code to make it more manageable and expandable.
+Stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code on branch \verb|usr/slm/sfcx|, together with refactoring of the Monin-Obukhov code to make it more easily expandable and manageable.
 \todo[inline]{the implementation is still incomplete, stable\_mix needs to be implemented yet. It is not very simple because the stable case correction functions are fairly complicated, and finding $\zeta$ for given $\rich$ can be expensive if done numerically.}
 
 For unstable case
@@ -252,6 +254,22 @@ The complicated form of stable case correction $\fstab_x$ is because a relativel
 \end{equation}
 and then then stability corrections $\fstab_x$ were obtained by differentiation.
 
+\begin{figure}
+   \centering
+   \subfloat[$\fstab_m=\fstab_h$ for stable case]{
+       \includegraphics[width=\panelW]{most-brutsaert/output/phi/stable_m.pdf}
+   }
+
+   \subfloat[$\fstab_m$ for unstable case]{
+       \includegraphics[width=\panelW]{most-brutsaert/output/phi/unstable_m.pdf}
+   }
+   \subfloat[$\fstab_h$ for unstable case]{
+       \includegraphics[width=\panelW]{most-brutsaert/output/phi/unstable_h.pdf}
+   }
+   \caption{Stability correction function for typical ESM4.1 settings (stability option 2), and \cite{Brutsaert2005} option.}
+   \label{fig:stability-corrections}
+\end{figure}
+
 \subsection{Typical model settings}
 ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
 
@@ -259,6 +277,7 @@ One notable feature of these plots is how the sensible heat flux does not depend
 
 Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
 
+Older models may have used diffrent sets of options. For example, ESM2Mb used stable option 2 with  $\zeta_t=0.5$, but with $\rcrit=10.0$ instead of 1.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Solving for surface fluxes}
 Following \cite{Held2004} note, bulk Richardson number can be calculated from known winds and virtual potential temperatures at the top of the surface boundary layer $z_a$ and the surface as
