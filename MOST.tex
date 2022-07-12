@@ -20,6 +20,13 @@
 \usepackage[osf]{mathpazo} % palatino fonts % uncomment for Palatino font
 \usepackage{todonotes}
 %\usepackage[disable]{todonotes} % remove [disable] to see to-do notes
+\usepackage{mdframed}
+\mdfsetup{
+backgroundcolor=yellow!20,
+leftmargin=0.5cm,
+leftline=false,
+rightline=false
+}
 \definecolor{darkgreen}{rgb}{0,0.5,0}
 \usepackage[linkcolor=blue,citecolor=darkgreen,colorlinks=true]{hyperref}
 
@@ -27,13 +34,15 @@
 
 % + custom commands - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}} % partial derivative
+\newcommand{\fderiv}[2]{\frac{d #1}{d #2}} % full derivative
 \newcommand{\vonkarman}{\kappa} % von Karman constant
 \newcommand{\pt}{\theta} % potential temperature
 \newcommand{\ustar}{\ensuremath{u_*}} % velocity scale
 \newcommand{\bstar}{\ensuremath{b_*}} % buoyancy scale
 \newcommand{\tstar}{\ensuremath{\pt_*}} % buoyancy scale
 \newcommand{\rich}{\text{Ri}} % Richardson number
-\newcommand{\rcrit}{\text{Ri}_c} % critical Richardson number
+\newcommand{\rcrit}{\rich_c} % critical Richardson number
+\newcommand{\rbulk}{\rich_b} % bulk Richardson number
 
 % typical panel width in multi-panel figures
 \newlength{\panelW}
@@ -123,9 +132,13 @@ $\phi_m$ is stability correction function,
 $\phi_m \to 1$ as $\zeta \to 0$ ro retrieve neutral case.
 
 \cite{Held2004} then defines
-\begin{equation}
-   F_m(\zeta) = \int\frac{\phi_m}{\zeta}\,d \zeta
-\end{equation}
+\begin{subequations}
+\label{eq:Held-integral}
+\begin{align}
+   F_m(\zeta) & = \int\frac{\phi_m}{\zeta}\,d \zeta \\
+   F_h(\zeta) & = \int\frac{\phi_h}{\zeta}\,d \zeta
+\end{align}
+\end{subequations}
 to solve \eqref{eq:u-profile} as
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman} \left[
@@ -243,6 +256,78 @@ One notable feature of these plots is how the sensible heat flux does not depend
 
 Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\section{Solving for surface fluxes}
+Following \cite{Held2004} note, bulk Richardson number can be calculated from known winds and virtual potential temperatures at the top of the surface boundary layer $z_a$ and the surface as
+\begin{equation}
+    \rbulk = z_a\frac{b(z_a)-b(0)}{u(z_a)^2} = g z_a \frac{\theta_v(z_a)-\theta_v(0)}{\theta_v(0)u(z_a)^2}
+\end{equation}
+where
+$z_a$ is the height of the height of the lowest atmospheric layer, and  $\zeta_a = z_a/L$.
+
+On the other hand, the same bulk Richardson function can be expressed in terms of integral stability functions~\eqref{eq:Held-integral}
+\begin{equation}\label{eq:ribulk}
+    \rbulk = \zeta \frac{F_t(\zeta_a) - F_t(\zeta_a z_{0h}/z_a)}
+        {(F_m(\zeta_a) - F_m(\zeta_a z_{0m}/z_a))^2}
+\end{equation}
+where
+$z_{0m}$ is the roughness length of momentum,
+$z_{0h}$ -- roughness length for buoyancy,
+and
+$\zeta_a = z_a/L$.
+
+Defining, for convenience, function
+\begin{equation}
+    F_i(\zeta_1, \zeta_2) = F_i(\zeta_2) - F_i(\zeta_1)
+                          = \int_{\zeta_1}^{\zeta_2} \frac{\phi_i(\zeta)}{\zeta} d \zeta
+\end{equation}
+we can rewrite~\eqref{eq:ribulk} as
+\begin{equation}\label{eqzeta}
+    f(\zeta_a) = \zeta_a \frac{F_t(\zeta_a z_{0h}/z_a, \zeta_a)}{F_m(\zeta_a z_{0m}/z_a,\zeta_a)^2} - \rbulk = 0
+\end{equation}
+
+FMS code solves nonlinear equation~\eqref{eqzeta} iteratively, to find the value of $\zeta_a = z_a/L$ that match boundary conditions. The solution procedure follows the Newton method, so on each iteration step, given a guess of $\zeta_0$, the step $\Delta \zeta$ is calculated as
+\begin{equation}
+   f(\zeta_0) + \fderiv{f}{\zeta} \Delta \zeta = 0
+\end{equation}
+\begin{equation}
+   \Delta \zeta = - f(\zeta_0)\Big[\fderiv{f}{\zeta}\Big]^{-1}
+\end{equation}
+until its absolute value falls below predefined tolerance.
+
+Noting that
+\begin{equation}
+    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_1} = - \frac{\Phi_i(\zeta_1)}{\zeta_1}, \qquad
+    \pderiv{F_i(\zeta_1,\zeta_2)}{\zeta_2} = \frac{\Phi_i(\zeta_2)}{\zeta_2}
+\end{equation}
+\begin{align}
+\fderiv{f}{\zeta}\notag
+    & =  \frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^2}
+    + \frac{\Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a)}{F_m(\zeta z_0/z_a,\zeta)^2}
+    - 2 \frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^3}(\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a))
+    \\
+    {} &=  \zeta\frac{F_t(\zeta z_t/z_a, \zeta)}{F_m(\zeta z_0/z_a,\zeta)^2}
+        \Bigg[
+            \frac{1}{\zeta}
+            + \frac{\Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a)}{\zeta F_t(\zeta z_t/z_a,\zeta)}
+            - 2 \frac{\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a)}{\zeta F_m(\zeta z_0/z_a,\zeta)}
+        \Bigg]
+\end{align}
+
+\begin{mdframed}
+An alternative mathematically equivalent form of equation~\eqref{eqzeta} would be
+\begin{equation}
+    f_1(\zeta) = \zeta F_t(\zeta z_t/z_a, \zeta) - \rbulk F_m(\zeta z_0/z_a,\zeta)^2 = 0
+\end{equation}
+so that the derivative of the function would be simpler:
+\begin{equation}
+    \begin{split}
+    \fderiv{f_1}{\zeta} & = F_t(\zeta z_t/z_a, \zeta) + \Phi_t(\zeta)-\Phi_t(\zeta z_t/z_a) \\
+    & \qquad \qquad - 2 \rbulk F_m(\zeta z_0/z_a,\zeta) \frac{1}{\zeta} [\Phi_m(\zeta)-\Phi_m(\zeta z_0/z_a)]
+    \end{split}
+\end{equation}
+This is not the expression that the code is using, though. Not sure why, it looks simpler. I don't like the $\zeta$ in the denominator...
+\end{mdframed}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Free convection limit}
