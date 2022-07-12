@@ -1,7 +1,7 @@
 \documentclass{article}
 %\usepackage{geometry}
-%\usepackage[hmargin={2cm,3cm},marginparsep=2mm]{geometry}       % shows frame
-\usepackage[showframe,hmargin={3cm,3cm},marginparsep=2mm]{geometry}       % shows frame
+%\usepackage[hmargin={3cm,3cm},marginparsep=2mm,showframe]{geometry}       % shows frame
+\usepackage[hmargin={3cm,3cm},marginparsep=2mm]{geometry}
 %\usepackage[showframe,pass]{geometry}  % shows frame but does not change page geometry
 
 %\usepackage{ametsoc}
@@ -17,7 +17,6 @@
 
 \usepackage{booktabs}
 \usepackage[notcite,notref]{showkeys}
-%\usepackage{showlabels}
 \usepackage[osf]{mathpazo} % palatino fonts % uncomment for Palatino font
 \usepackage{todonotes}
 %\usepackage[disable]{todonotes} % remove [disable] to see to-do notes
@@ -33,7 +32,8 @@
 \newcommand{\ustar}{\ensuremath{u_*}} % velocity scale
 \newcommand{\bstar}{\ensuremath{b_*}} % buoyancy scale
 \newcommand{\tstar}{\ensuremath{\pt_*}} % buoyancy scale
-\newcommand{\rcrit}{\text{Ri}_c} % potential temperature
+\newcommand{\rich}{\text{Ri}} % Richardson number
+\newcommand{\rcrit}{\text{Ri}_c} % critical Richardson number
 
 % typical panel width in multi-panel figures
 \newlength{\panelW}
@@ -129,7 +129,7 @@ $\phi_m \to 1$ as $\zeta \to 0$ ro retrieve neutral case.
 to solve \eqref{eq:u-profile} as
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman} \left[
-          F_m\left(\frac{z}{L}\right)-F_m\left(\frac{z_0}{L}\right)
+          F_m\left(\frac{z}{L}\right)-F_m\left(\frac{z_{0m}}{L}\right)
       \right]
 \end{equation}
 
@@ -141,24 +141,24 @@ Other literature, including \cite{Jimenez2012} use equivalent approach to define
 to get
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman}\left[
-          \ln\left(\frac{z}{z_0}\right) - \psi_m\left(\frac{z}{L}\right) + \psi_m\left(\frac{z_0}{L}\right)
+          \ln\left(\frac{z}{z_{0m}}\right) - \psi_m\left(\frac{z}{L}\right) + \psi_m\left(\frac{z_{0m}}{L}\right)
       \right]
 \end{equation}
 
-Similarly, for buoyancy
+Similarly, for temperature
 \begin{equation}\label{eq:b-profile}
-   \frac{\vonkarman z}{\bstar}\pderiv{b}{z} = \phi_b(\zeta)
+   \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} = \phi_h(\zeta)
 \end{equation}
 and
 \begin{equation}
-   b(z) - b(0) = \frac{\bstar}{\vonkarman} \left[
-          F_b\left(\frac{z}{L}\right)-F_b\left(\frac{z_b}{L}\right)
+   \pt(z) - \pt(0) = \frac{\tstar}{\vonkarman} \left[
+          F_h\left(\frac{z}{L}\right)-F_h\left(\frac{z_{0h}}{L}\right)
       \right]
 \end{equation}
 or
 \begin{equation}
-   b(z) - b(0) = \frac{\bstar}{\vonkarman}\left[
-          \ln\left(\frac{z}{z_b}\right) - \psi_h\left(\frac{z}{L}\right) + \psi_h\left(\frac{z_b}{L}\right)
+   \pt(z) - \pt(0) = \frac{\tstar}{\vonkarman}\left[
+          \ln\left(\frac{z}{z_{0h}}\right) - \psi_h\left(\frac{z}{L}\right) + \psi_h\left(\frac{z_{0h}}{L}\right)
       \right]
 \end{equation}
 
@@ -173,20 +173,76 @@ and substituting ${\partial u/\partial z}$ from~\eqref{eq:u-profile}
 \end{equation}
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Stability functions}
-\subsection{\protect\cite{Held2004}}
-Stability functions recommended by Garratt.
+Current FMS code (2020.04) can use a number of stability correction functions, controlled by options specified in \verb|monin_obukhov_nml|.
 
-\subsubsection{Unstable ($\zeta < 0$)}
+\subsection{Stable option 1}
+In unstable regime ($\zeta < 0$), the stability functions are defined as
+\begin{subequations}
+\label{eq:fms-unstable}
 \begin{align}
    \phi_m(\zeta) & = (1-16 \zeta)^{-1/4} \\
-   \phi_b(\zeta) & = (1-16 \zeta)^{-1/2}
+   \phi_h(\zeta) & = \begin{cases}
+      (1-16\zeta)^{-1/3}, & \text{for new option (Ming Zhao)} \\
+      (1-16\zeta)^{-1/2}, & \text{for old option}
+   \end{cases}
 \end{align}
+\end{subequations}
+Note that the momentum stability function is the same as in \cite{Held2004}
 
-\subsubsection{Stable ($\zeta > 0$)}
+In stable case (for $\zeta>0$)
 \begin{equation}
-    \phi_m(\zeta) = \phi_b(\zeta) = 1+5\zeta
+   \phi_m(\zeta) = \phi_h(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
 \end{equation}
-which are considered to have empirical support for $-5 < \zeta < 1$.
+
+\subsection{Stable option 2}
+In unstable regime, stability corrections are the same as in stable option 1, equations~\eqref{eq:fms-unstable}. In stable regime
+\begin{equation}
+   \phi_m(\zeta) = \phi_h(\zeta) = \begin{cases}
+      1+5\zeta, & \zeta < \zeta_t \\
+      1+5 \zeta_t + \frac{\zeta-\zeta_t}{\rcrit}, & \zeta \ge \zeta_t
+   \end{cases}
+\end{equation}
+
+Note that in stable case, $\phi_m(\zeta) = \phi_h(\zeta)$, like they were in \cite{Held2004}.
+
+\subsection{Brutsaert}
+A new stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code, on branch \verb|usr/slm/sfcx|, together with refactoring of the code to make it more manageable and expandable.
+\todo[inline]{the implementation is still incomplete, stable\_mix needs to be implemented yet. It is not very simple because the stable case correction functions are fairly complicated, and finding $\zeta$ for given $\rich$ can be expensive if done numerically.}
+
+For unstable case
+\begin{subequations}
+\begin{align}
+    \phi_m(\zeta) & = \begin{cases}
+        (a_u+b_u y^{4/3})/(a_u + y), & y \le b_u^{-3} \\
+        1,                            & y > b_u^{-3}
+    \end{cases}
+    \\
+    \phi_h(\zeta) & = (c_u + d_u y^{n_u})/(c_u+y^{n_u})
+\end{align}
+\end{subequations}
+where $y=-\zeta$, $a_u = 0.33$, $b_u = 0.41$, $c_u = 0.33$, $d_u = 0.057$, and $n_u = 0.78$.
+
+In stable case
+\begin{equation}
+    \phi_m(\zeta) = \phi_h(\zeta)
+        = 1 + a_s \frac{\zeta + \zeta^{b_s}(1+\zeta^{b_s})^{-1+1/b_s}}
+                       {\zeta + (1+\zeta^{b_s})^{1/b_s}}
+\end{equation}
+with $a_s = 6.1$ and  $b_s = 2.5$.
+
+The complicated form of stable case correction $\phi_x$ is because a relatively simple integral stability function ws postulated first
+\begin{equation}
+\Psi_x = -a_s \ln\big[\zeta + (1+\zeta^{b_s})^{1/b_s}\big]
+\end{equation}
+and then then stability corrections $\phi_x$ were obtained by differentiation.
+
+\subsection{Typical model settings}
+ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
+
+One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $z_{0m}=z_{0h}$). This feature is even more striking in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $z_{0m}=\SI{2}{m}$, consistent with the values that land model reaches in forests.
+
+Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
+
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Free convection limit}
@@ -195,7 +251,7 @@ As $u \to 0$, $\ustar \to 0$, and $\zeta \to -\infty$. In this case, vertical pr
 
 To see what is going on, start from equation for vertical profile of buoyancy \eqref{eq:b-profile}:
 \begin{equation*}
-    \frac{\vonkarman z}{\bstar}\pderiv{b}{z} = \phi_b(\zeta)
+    \frac{\vonkarman z}{\bstar}\pderiv{b}{z} = \phi_h(\zeta)
 \end{equation*}
 Also, from definition of \bstar~\eqref{eq:bstar}
 \begin{equation*}
@@ -207,15 +263,15 @@ and definition of $\zeta$
 \end{equation*}
 we get
 \begin{equation}
-    \pderiv{b}{z} = \frac{\bstar}{\vonkarman z}\phi_b(\zeta)
-    = \frac{\bstar}{\vonkarman z}\phi_b\left(-\frac{z \vonkarman \bstar}{\ustar^2}\right)
-    = \frac{B}{\vonkarman z \rho \ustar }\phi_b
+    \pderiv{b}{z} = \frac{\bstar}{\vonkarman z}\phi_h(\zeta)
+    = \frac{\bstar}{\vonkarman z}\phi_h\left(-\frac{z \vonkarman \bstar}{\ustar^2}\right)
+    = \frac{B}{\vonkarman z \rho \ustar }\phi_h
       \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
 \end{equation}
 
 When the wind is close to zero in non-neutral situation, it is reasonable to assume that the heat flux should not depend on $\ustar$. Therefore, in equation~\eqref{eq:b-profile}, the dependence on $\ustar$ should disappear when wind goes to zero (and, therefore, $\ustar \to 0$ and $\zeta \to \infty$). Suppose $\phi(\zeta) \propto \zeta^n$ for $\zeta \to -\infty$, with some power $n$. Then
 \begin{equation}
-    \frac{B}{\vonkarman z \rho \ustar }\phi_b \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
+    \frac{B}{\vonkarman z \rho \ustar }\phi_h \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)
   = \frac{B}{\vonkarman z \rho \ustar } C \left(-\frac{z \vonkarman B}{\rho \ustar^3}\right)^n
   = - C \frac{B^{n+1} z^{n-1} \vonkarman^{n-1}}{\rho^{n+1}} \frac{1}{\ustar^{3n+1}}
 \end{equation}
@@ -231,42 +287,7 @@ For $n < -1/3$, the vertical gradient of buoyancy would tend to zero for finite 
 where $\beta$ is an empirical constant on the order of 1, and
 $z_i$ is the characteristic height of the convective boundary layer \citep{Beljaars1994}. In GFDL models, $z_i$ is assumed to be constant \SI{1000}{m}.
 
-This treatment should ensure the same asymptotic behavior as imposing the above constraint on $\phi_b$ at $\ustar \to -\infty$. However, such approach can only work if calculation of gustiness is embedded within the solution of the implicit equations of heat and momentum balances in the Monin-Obukhov layer. In GFDL model that is not done: rather, gustiness is calculated in the atmosphere based on the flux and stability values from the previous time step. Therefore, I believe there is no guarantee that the surface fluxes produce reasonable solution in convective limit.
-% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-\section{FMS}
-Current FMS code (2020.04) has a number of options.
-
-\subsection{Unstable ($\zeta < 0$)}
-\begin{align}
-   \phi_m(\zeta) & = (1-16 \zeta)^{-1/4} \\
-   \phi_b(\zeta) & = \begin{cases}
-      (1-16\zeta)^{-1/3}, & \text{for new option (Ming Zhao)} \\
-      (1-16\zeta)^{-1/2}, & \text{for old option}
-   \end{cases}
-\end{align}
-Note that the momentum stability function is the same as in \cite{Held2004}
-
-\subsection{Stable ($\zeta > 0$), option 1}
-\begin{equation}
-   \phi_m(\zeta) = \phi_b(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
-\end{equation}
-
-\subsection{Stable ($\zeta > 0$), option 2}
-\begin{equation}
-   \phi_m(\zeta) = \phi_b(\zeta) = \begin{cases}
-      1+5\zeta, & \zeta < \zeta_t \\
-      1+5 \zeta_t + \frac{\zeta-\zeta_t}{\rcrit}, & \zeta \ge \zeta_t
-   \end{cases}
-\end{equation}
-
-Note that in stable case, $\phi_m(\zeta) = \phi_b(\zeta)$, like they were in \cite{Held2004}.
-
-\subsubsection{Model settings}
-ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
-
-One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $z_0=z_b$). This feature is even more striking in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $z_0=\SI{2}{m}$, consistent with the values that land model reaches in forests.
-
-Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
+This treatment should ensure the same asymptotic behavior as imposing the above constraint on $\phi_h$ at $\ustar \to -\infty$. However, such approach can only work if calculation of gustiness is embedded within the solution of the implicit equations of heat and momentum balances in the Monin-Obukhov layer. In GFDL model that is not done: rather, gustiness is calculated in the atmosphere based on the flux and stability values from the previous time step. Therefore, I believe there is no guarantee that the surface fluxes produce reasonable solution in convective limit.
 
 \begin{figure}
    \centering
@@ -283,7 +304,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
   \subfloat[Brutsaert, $k B^{-1}=0$]{
       \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_t.pdf}
   }
-   \caption{Dependence of sensible heat flux on surface temperature, for roughness $z_0=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
+   \caption{Dependence of sensible heat flux on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
    \label{fig:small-z0-sens}
 \end{figure}
 
@@ -302,7 +323,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for roughness $z_0=\SI{0.1}{\m}$.}
+   \caption{Dependence of $\bstar$ on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -320,7 +341,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for roughness $z_0=\SI{0.1}{\m}$.}
+   \caption{Dependence of surface stress on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -338,7 +359,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for roughness $z_0=\SI{0.1}{\m}$.}
+   \caption{Dependence of $\ustar$ on surface temperature, for roughness $z_{0m}=\SI{0.1}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -357,7 +378,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_t.pdf}
    }
-   \caption{Dependence of sensible heat flux on surface temperature, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of sensible heat flux on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
    \label{fig:large-z0-sens}
 \end{figure}
 
@@ -376,7 +397,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of $\bstar$ on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -394,7 +415,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of surface stress on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -412,7 +433,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of $\ustar$ on surface temperature, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -433,7 +454,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_t.pdf}
    }
 
-   \caption{Dependence of sensible heat flux on wind speed, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of sensible heat flux on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
    \label{fig:sens-vs-u}
 \end{figure}
 
@@ -453,7 +474,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/b_star.pdf}
    }
 
-   \caption{Dependence of $\bstar$ on wind speed, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of $\bstar$ on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -472,7 +493,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_m.pdf}
    }
 
-   \caption{Dependence of surface stress on wind speed, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of surface stress on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -491,7 +512,7 @@ Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/u_star.pdf}
    }
 
-   \caption{Dependence of $\ustar$ on wind speed, for high value of roughness $z_0=\SI{2}{\m}$.}
+   \caption{Dependence of $\ustar$ on wind speed, for high value of roughness $z_{0m}=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
