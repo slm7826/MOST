@@ -99,8 +99,8 @@ for infile in args.input:
                     m = re.match(r'\s*'+l+r'\s*=\s*([^\s,]+)',row,flags=re.I)
                     if m:
                         try:
-                            m = float(m.group(1))
-                            label.append('{}={:g}'.format(l,float(m.group(1))))
+                            value = float(m.group(1))
+                            label.append('{}={:g}'.format(l,value))
                         except:
                             label.append(m.group(1))
         label=', '.join(label)
@@ -109,11 +109,13 @@ for infile in args.input:
     ax.plot(columns[args.x],columns[args.y],label=label)
 
 ax.legend(loc='best')
-bb = ax.get_tightbbox(fig.canvas.get_renderer())
-print(bb.xmin,bb.xmax,bb.ymin,bb.ymax)
+
+# print bounding box in some coordinates
+# bb = ax.get_tightbbox(fig.canvas.get_renderer())
+# print(bb.xmin,bb.xmax,bb.ymin,bb.ymax)
 
 if args.save:
-#    fig.savefig(args.save[0], transparent=True, bbox_inches='tight')
-   fig.savefig(args.save[0], transparent=True)
+   fig.savefig(args.save[0], transparent=True, bbox_inches='tight')
+#    fig.savefig(args.save[0], transparent=True)
 else:
    plt.show()
