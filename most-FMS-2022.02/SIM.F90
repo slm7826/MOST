@@ -70,7 +70,7 @@ program test
   real :: DRDT ! derivalive of lwup wrt surface temperature
   real :: swnet ! net shortwave
   ! read namelists
-  open (701, file='SIM.nml')
+  open (701, file='input.nml')
   read (701, monin_obukhov_nml, iostat=io)
   read (701, idealized_nml,     iostat=io)
 
