@@ -30,12 +30,12 @@ def parse_limits(str):
 parser = argparse.ArgumentParser(description='plot something')
 parser.add_argument('-v','--verbose', dest='verb',
     help='increase verbosity', action='count', default=0)
-parser.add_argument('-x','--x', action='store', default='t_sfc',
+parser.add_argument('-x','--x', action='store', required=True,
     help='plot x axis')
-parser.add_argument('-y','--y', action='store', default='flux_t',
-    help='variable to plot')
-parser.add_argument('--label', action='store', default=None,
-    help='list of settings to include in legend')
+parser.add_argument('-y','--y','--variable', action='append', required=True,
+    help='variables to plot')
+parser.add_argument('--label', action='append', default=[],
+    help='list of settings to include in the legend; "var" means plotted variable name')
 parser.add_argument('--xlimits', action='store', metavar='XS:XE',
     help='X limits for the plot')
 parser.add_argument('--ylimits', action='store', metavar='YS:YE',
@@ -44,6 +44,10 @@ parser.add_argument('--xlog', action='store_true', default=False,
     help='logarithmic X')
 parser.add_argument('--ylog', action='store_true', default=False,
     help='logarithmic Y')
+parser.add_argument('--xlabel', action='store', default=None,
+    help='X axis label')
+parser.add_argument('--ylabel', action='store', default=None,
+    help='Y axis label')
 parser.add_argument('--width',type=float, default=8.0,
     help='width of the plot')
 parser.add_argument('--aspect',type=float, default=1.0/1.618,
@@ -61,13 +65,33 @@ if args.verb > 0:
     for package in np,mpl:
         print('    {:>20} : {}'.format(package.__name__,package.__version__))
 
+# prepare the list of variables to plot
+variables = []
+for v in args.y:
+    variables+=v.split(',')
+
+# prepare the list of label tags
+tags = []
+for t in args.label:
+    tags += t.split(',')
+
+# set up plot parameters
 figW=args.width; figH=figW*args.aspect
 # fig,ax = plt.subplots(1,1,facecolor='w',figsize=(figW,figH))
 fig = plt.figure(facecolor='w',figsize=(figW,figH))
 ax  = fig.add_axes([0.1,0.13,0.85,0.85])
 if (args.title): ax.set_title(args.title)
-ax.set_xlabel(args.x)
-ax.set_ylabel(args.y)
+
+if args.xlabel:
+    if args.xlabel.lower() != 'none' : ax.set_xlabel(args.xlabel)
+else:
+    ax.set_xlabel(args.x)
+
+if args.ylabel:
+    if args.ylabel.lower() != 'none' : ax.set_ylabel(args.ylabel)
+else:
+    ax.set_ylabel(variables[0])
+
 if args.xlimits:
     xs,xe=parse_limits(args.xlimits)
     ax.set_xlim(xs,xe)
@@ -89,24 +113,26 @@ for infile in args.input:
             for (k,v) in row.items(): # go over each column name and value
                 columns[k].append(float(v)) # append the value into the appropriate list
                                       # based on column name k
-    # read namelist data for the legend
-    if args.label:
-        ll=args.label.split(',')
-        label=[]
-        for l in ll:
+    # put together plot label
+    for v in variables:
+        label = []
+        for t in tags:
+            # add variable name
+            if t == 'var' :
+                label.append(v)
+            # continue
+            # read namelist data for the legend
             with open(infile) as f:
                 for row in f:
-                    m = re.match(r'\s*'+l+r'\s*=\s*([^\s,]+)',row,flags=re.I)
-                    if m:
-                        try:
-                            value = float(m.group(1))
-                            label.append('{}={:g}'.format(l,value))
-                        except:
-                            label.append(m.group(1))
+                    m = re.match(r'\s*'+t+r'\s*=\s*([^\s,]+)',row,flags=re.I)
+                    if not m : continue
+                    try:
+                        value = float(m.group(1))
+                        label.append('{}={:g}'.format(t,value))
+                    except:
+                        label.append(m.group(1))
         label=', '.join(label)
-    else:
-        label=''
-    ax.plot(columns[args.x],columns[args.y],label=label)
+        ax.plot(columns[args.x],columns[v],label=label)
 
 ax.legend(loc='best')
 
