@@ -9,11 +9,11 @@ program test
   integer, parameter :: max_iter = 20
   real   , parameter :: error=1.e-04, zeta_min=1.e-06, small=1.e-04
   real   , parameter :: RDGAS  = 287.04           !< Gas constant for dry air [J/kg/deg]
-  real   , parameter :: RVGAS  = 461.50           !< Gas constant for water vapor [J/kg/deg]
+!   real   , parameter :: RVGAS  = 461.50           !< Gas constant for water vapor [J/kg/deg]
   real   , parameter :: KAPPA  = 2.0/7.0  !< RDGAS / CP_AIR [dimensionless]
   real   , parameter :: CP_AIR = RDGAS/KAPPA              !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
 
-  real   , parameter :: delta_T = 0.01
+  real   , parameter :: delta_T = 0.01   ! increment for calculation of sensible flux derivative
   real   , parameter :: gust_zi = 1000.0 ! m, boundary layer depth for gustiness
 
   ! + namelists
@@ -24,7 +24,6 @@ program test
   real    :: drag_min_mom   = 1.e-05
   logical :: neutral        = .false.
   real    :: zeta_trans     = 0.5
-  logical :: new_mo_option  = .false.
 
   namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
                                drag_min_moist, drag_min_mom, zeta_trans
@@ -51,12 +50,17 @@ program test
   class(most_functions_T), pointer :: most
 
   ! inputs
-  real,    dimension(1) :: pt, z, z0, zt, zq, x
+  real,    dimension(1) :: z, z0, zt, zq, x
   logical :: avail(1)
   ! outputs
   real,    dimension(1) :: &
       t_sfc1, t_atm1, u_atm1, rho, flux_t, flux_m, &
-      cd_m, cd_t, cd_q, u_star, b_star, gust, rich, zeta, ga, ra
+      cd_m, cd_t, cd_q, u_star, b_star, gust, rich, zeta, ga, ra, deriv1
+  ! for calculations of sensible flux derivatives:
+  real, dimension(1) :: t_sfc0, flux_t0
+  ! "deriv0" in the output is rho*Cp*Cd*|U|; "deriv1" is the difference in fluxes divided by
+  ! differences in temperature. Therefore "deriv1" takes into account dependence of Cd on
+  ! stability, while "deriv0" does not. Flux exchange actually uses "deriv0".
   integer :: ier
 
   ! read namelists
@@ -70,7 +74,7 @@ program test
   write(*,monin_obukhov_nml)
   write(*,most_nml)
   write(*,*)'RESULTS:'
-  write(*,'(a)') 't_sfc,u_atm,flux_t,flux_m,cd_m,cd_t,cd_q,ga,ra,u_star,b_star,rich,zeta,gust,gust+u_atm,ier'
+  write(*,'(a)') 't_sfc,u_atm,flux_t,flux_m,cd_m,cd_t,cd_q,ga,ra,u_star,b_star,rich,zeta,gust,gust+u_atm,deriv0,deriv1,ier'
 
   select case(trim(stable_option))
   case('1')
@@ -105,15 +109,26 @@ program test
      end select
 
      rho = p_atm / (rdgas * t_atm) ! density
+
+     ! calculate parameters for T_sfc - delta_T
+     t_sfc0 = t_sfc1 - delta_T
+     call monin_obukhov_drag_1d(most, grav, vonkarm,                      &
+          & error, zeta_min, max_iter, small,                             &
+          & drag_min_heat, drag_min_moist, drag_min_mom,                  &
+          & n, t_atm1, t_sfc0, z, z0, zt, zq, u_atm1, cd_m, cd_t,         &
+          & cd_q, u_star, b_star, rich, zeta, ier, avail)
+     flux_t0 = cd_t * rho * abs(u_atm1) * cp_air * (t_sfc0 - t_atm1)  ! flux of sensible heat (W/m**2)
+
      call monin_obukhov_drag_1d(most, grav, vonkarm,                      &
           & error, zeta_min, max_iter, small,                             &
           & drag_min_heat, drag_min_moist, drag_min_mom,                  &
           & n, t_atm1, t_sfc1, z, z0, zt, zq, u_atm1, cd_m, cd_t,         &
           & cd_q, u_star, b_star, rich, zeta, ier, avail)
-     ga     = cd_q * rho * u_atm
-     ra     = 1.0/(max(ga,1e-6))
+     ga     = cd_q * rho * abs(u_atm) ! conductance of constant flux layer for tracers
+     ra     = 1.0/(max(ga,1e-6))      ! resistance of constant flux layer for tracers
      flux_t = cd_t * rho * abs(u_atm1) * cp_air * (t_sfc1 - t_atm1)  ! flux of sensible heat (W/m**2)
      flux_m = cd_m * rho * abs(u_atm1) * u_atm1                      ! flux of momentum (N/m2)
+     deriv1 = (flux_t - flux_t0)/delta_T ! derivative of sensible heat flux wrt surface temperature
 
      ! calculate gustiness
      where (b_star > 0.)
@@ -123,6 +138,7 @@ program test
      end where
 
     write(*,'(99(g14.5,:,","))') t_sfc1, u_atm1, flux_t, flux_m, cd_m, cd_t, cd_q, &
-         ga, ra, u_star, b_star, rich, zeta, gust, sqrt(gust**2+u_atm1**2), ier
+         ga, ra, u_star, b_star, rich, zeta, gust, sqrt(gust**2+u_atm1**2), &
+         cd_t * rho * abs(u_atm1) * cp_air, deriv1, ier
   enddo
 end program test
