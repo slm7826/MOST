@@ -104,6 +104,8 @@ In the neutral case, far from the wall (where the viscosity effects can be impor
    \pderiv{u}{z} = \frac{\ustar}{\vonkarman z}
 \end{equation}
 
+Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was first introduced into the equation for $L$ by Obukhov in 1946 and has usually been preserved in all subsequent works by tradition. $L>0$ for stable situations.
+
 \subsection{Stratified flow}
 The statistics of the flow in the near-surface layer can only depend on small number of parameters that appear in the above section, namely on temperature-to-buoyancy scale $g/\pt_0$, density $\rho_0$, fluxes of momentum $\tau$ (or, equivalently, velocity scale $\ustar$) and temperature $H/(\rho_0 c_p)=\overline{\pt'w'}$, and $z$. Units of these quantities are
 \begin{equation}
@@ -122,10 +124,11 @@ There is only one way (to the arbitrary power) to combine the above parameters t
 \end{equation}
 and that is
 \begin{equation}
-   L = \frac{\ustar^3}{\vonkarman\frac{g}{\pt_0}(\overline{\pt'w'})}
+   L = - \frac{\ustar^3}{\vonkarman\frac{g}{\pt_0}(\overline{\pt'w'})}
+     = \frac{\ustar^2}{\vonkarman\frac{g}{\pt_0}\tstar}
 \end{equation}
-
-Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was first introduced into the equation for $L$ by Obukhov in 1946 and has usually been preserved in all subsequent works by tradition. $L>0$ for stable situations; $L<0$ for unstable cases.
+%
+$L$ is negative for unstable cases, positive in stable conditions, infinite in neutral.
 
 In non-neutral case,
 \begin{equation}\label{eq:u-profile}
@@ -137,14 +140,11 @@ $\fstab_m$ is stability correction function,
 $\fstab_m \to 1$ as $\zeta \to 0$ ro retrieve neutral case.
 
 \cite{Held2004} then defines
-\begin{subequations}
 \label{eq:Held-integral}
-\begin{align}
-   F_m(\zeta) & = \int\frac{\fstab_m}{\zeta}\,d \zeta \\
-   F_h(\zeta) & = \int\frac{\fstab_h}{\zeta}\,d \zeta
-\end{align}
-\end{subequations}
-to solve \eqref{eq:u-profile} as
+\begin{equation}
+   F_i(\zeta) = \int\frac{\fstab_i}{\zeta}\,d \zeta \\
+\end{equation}
+with $i=m$ for momentum and $h$ for heat, to solve \eqref{eq:u-profile} as
 \begin{equation}
    u(z) = \frac{\ustar}{\vonkarman} \left[
           F_m\left(\frac{z}{L}\right)-F_m\left(\frac{\zm}{L}\right)
@@ -153,8 +153,8 @@ to solve \eqref{eq:u-profile} as
 
 Other literature, including \cite{Jimenez2012} use equivalent approach to define
 \begin{equation}
-   \psi_m(\zeta) = \int\frac{1-\fstab_m(\zeta)}{\zeta}\, d \zeta
-               = \ln(\zeta) - F_m(\zeta)
+   \psi_i(\zeta) = \int\frac{1-\fstab_i(\zeta)}{\zeta}\, d \zeta
+               = \ln(\zeta) - F_i(\zeta)
 \end{equation}
 to get
 \begin{equation}
@@ -266,14 +266,14 @@ and then then stability corrections $\fstab_x$ were obtained by differentiation.
    \subfloat[$\fstab_h$ for unstable case]{
        \includegraphics[width=\panelW]{most-brutsaert/output/phi/unstable_h.pdf}
    }
-   \caption{Stability correction function for typical ESM4.1 settings (stability option 2), and \cite{Brutsaert2005} option.}
+   \caption[Stability correction functions]{Stability correction functions for typical ESM4.1 settings (stability option 2), and \cite{Brutsaert2005} option.}
    \label{fig:stability-corrections}
 \end{figure}
 
 \subsection{Typical model settings}
 ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
 
-One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $\zm=\zh$). This feature is even more striking in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $\zm=\SI{2}{m}$, consistent with the values that land model reaches in forests.
+One notable feature of these plots is how the sensible heat flux does not depend monotonically on the wind speed for the case of $k B^{-1}=0$ (i.e., when we assume $\zm=\zh$). This feature strikingly obvious in Figure~\ref{fig:sens-vs-u}, which shows results for high value of roughness length $\zm=\SI{2}{m}$, consistent with the values that land model reaches in forests.
 
 Speaking of Figure~\ref{fig:sens-vs-u}, one cannot help noticing huge magnitudes of heat fluxes, reaching values of \SIrange{500}{1000}{\W\per\m\squared} even for modest temperature gradient of \SI{2}{\K} across the near-surface layer. Note how for slow wind speeds the heat flux rapidly shoots upwards. In both cases ($k B^{-1}=2$ and $k B^{-1}=2$) gustiness would have introduced significant changes in the heat fluxes, if it was applied.
 
@@ -289,7 +289,7 @@ $z_a$ is the height of the height of the lowest atmospheric layer, and  $\zeta_a
 
 On the other hand, the same bulk Richardson function can be expressed in terms of integral stability functions~\eqref{eq:Held-integral}
 \begin{equation}\label{eq:ribulk}
-    \rbulk = \zeta \frac{F_t(\zeta_a) - F_t(\zeta_a \zh/z_a)}
+    \rbulk = \zeta \frac{F_h(\zeta_a) - F_h(\zeta_a \zh/z_a)}
         {(F_m(\zeta_a) - F_m(\zeta_a \zm/z_a))^2}
 \end{equation}
 where
@@ -305,7 +305,7 @@ Defining, for convenience, function
 \end{equation}
 we can rewrite~\eqref{eq:ribulk} as
 \begin{equation}\label{eqzeta}
-    f(\zeta_a) = \zeta_a \frac{F_t(\zeta_a \zh/z_a, \zeta_a)}{F_m(\zeta_a \zm/z_a,\zeta_a)^2} - \rbulk = 0
+    f(\zeta_a) = \zeta_a \frac{F_h(\zeta_a \zh/z_a, \zeta_a)}{F_m(\zeta_a \zm/z_a,\zeta_a)^2} - \rbulk = 0
 \end{equation}
 
 FMS code solves nonlinear equation~\eqref{eqzeta} iteratively, to find the value of $\zeta_a = z_a/L$ that match boundary conditions. The solution procedure follows the Newton method, so on each iteration step, given a guess of $\zeta_0$, the step $\Delta \zeta$ is calculated as
@@ -325,15 +325,15 @@ Noting that
 \begin{subequations}
 \begin{align}
 \fderiv{f}{\zeta}
-    & =  \frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
+    & =  \frac{F_h(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
     + \frac{\fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a)}{F_m(\zeta \zm/z_a,\zeta)^2}
-    - 2 \frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^3}(\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a))
+    - 2 \frac{F_h(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^3}(\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a))
     \label{eq:Fderiv1}
     \\
-    {} &=  \zeta\frac{F_t(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
+    {} &=  \zeta\frac{F_h(\zeta \zh/z_a, \zeta)}{F_m(\zeta \zm/z_a,\zeta)^2}
         \Bigg[
             \frac{1}{\zeta}
-            + \frac{\fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a)}{\zeta F_t(\zeta \zh/z_a,\zeta)}
+            + \frac{\fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a)}{\zeta F_h(\zeta \zh/z_a,\zeta)}
             - 2 \frac{\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a)}{\zeta F_m(\zeta \zm/z_a,\zeta)}
         \Bigg]
     \label{eq:Fderiv2}
@@ -343,12 +343,12 @@ Noting that
 \begin{mdframed}
 An alternative mathematically equivalent form of equation~\eqref{eqzeta} would be
 \begin{equation}
-    f_1(\zeta) = \zeta F_t(\zeta \zh/z_a, \zeta) - \rbulk F_m(\zeta \zm/z_a,\zeta)^2 = 0
+    f_1(\zeta) = \zeta F_h(\zeta \zh/z_a, \zeta) - \rbulk F_m(\zeta \zm/z_a,\zeta)^2 = 0
 \end{equation}
 so that the derivative of the function would be simpler:
 \begin{equation}
     \begin{split}
-    \fderiv{f_1}{\zeta} & = F_t(\zeta \zh/z_a, \zeta) + \fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a) \\
+    \fderiv{f_1}{\zeta} & = F_h(\zeta \zh/z_a, \zeta) + \fstab_h(\zeta)-\fstab_h(\zeta \zh/z_a) \\
     & \qquad \qquad - 2 \rbulk F_m(\zeta \zm/z_a,\zeta) \frac{1}{\zeta} [\fstab_m(\zeta)-\fstab_m(\zeta \zm/z_a)]
     \end{split}
 \end{equation}
@@ -416,7 +416,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
   \subfloat[Brutsaert, $k B^{-1}=0$]{
       \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_t.pdf}
   }
-   \caption{Dependence of sensible heat flux on surface temperature, for roughness $\zm=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
+   \caption[Sensible heat vs surface temperature for $\zm=\SI{0.1}{\m}$.]{Dependence of sensible heat flux on surface temperature, for roughness $\zm=\SI{0.1}{\m}$. Air temperature at the top of surface layer is kept at \SI{300}{\K}.}
    \label{fig:small-z0-sens}
 \end{figure}
 
@@ -435,7 +435,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
+   \caption[$\bstar$ vs surface temperature, for $\zm=\SI{0.1}{\m}$.]{Dependence of $\bstar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -453,7 +453,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
+   \caption[Surface stress vs surface temperature, for $\zm=\SI{0.1}{\m}$.]{Dependence of surface stress on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -471,7 +471,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
+   \caption[$\ustar$ vs surface temperature, for $\zm=\SI{0.1}{\m}$.]{Dependence of $\ustar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -490,7 +490,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_t.pdf}
    }
-   \caption{Dependence of sensible heat flux on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[Sensible heat vs surface temperature, for $\zm=\SI{2}{\m}$.]{Dependence of sensible heat flux on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
    \label{fig:large-z0-sens}
 \end{figure}
 
@@ -509,7 +509,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/b_star.pdf}
    }
-   \caption{Dependence of $\bstar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[$\bstar$ vs surface temperature, for $\zm=\SI{2}{\m}$.]{Dependence of $\bstar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -527,7 +527,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_m.pdf}
    }
-   \caption{Dependence of surface stress on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[Surface stress vs surface temperature, for $\zm=\SI{2}{\m}$.]{Dependence of surface stress on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -545,7 +545,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
    \subfloat[Brutsaert, $k B^{-1}=0$]{
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/u_star.pdf}
    }
-   \caption{Dependence of $\ustar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[$\ustar$ vs surface temperature, for $\zm=\SI{2}{\m}$.]{Dependence of $\ustar$ on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -566,7 +566,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_t.pdf}
    }
 
-   \caption{Dependence of sensible heat flux on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[Sensible heat flux vs wind speed, for $\zm=\SI{2}{\m}$.]{Dependence of sensible heat flux on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
    \label{fig:sens-vs-u}
 \end{figure}
 
@@ -586,7 +586,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/b_star.pdf}
    }
 
-   \caption{Dependence of $\bstar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[$\bstar$ vs wind speed, for $\zm=\SI{2}{\m}$.]{Dependence of $\bstar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -605,7 +605,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/flux_m.pdf}
    }
 
-   \caption{Dependence of surface stress on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[Surface stress on wind speed, for $\zm=\SI{2}{\m}$.]{Dependence of surface stress on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 \begin{figure}
@@ -624,7 +624,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0-vsU/u_star.pdf}
    }
 
-   \caption{Dependence of $\ustar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \caption[$\ustar$ vs wind speed, for $\zm=\SI{2}{\m}$.]{Dependence of $\ustar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
