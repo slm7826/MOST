@@ -40,7 +40,7 @@ cat <<EOF > input.nml
 /
 EOF
 $codeDir/SIM.x > $tmpdir/SIM.csv
-commonFlags="--x=Time --label=var --xlab=None --xlim=0.5:2.5 --width=12 --aspect=0.2"
+commonFlags="--x=Time --label=var-name --xlab=None --xlim=0.5:2.5 --width=12 --aspect=0.2"
 $tooldir/plot.py $commonFlags --var=Ts,Ta             --ylab=degK --save=$outdir/temp.pdf   $tmpdir/SIM.csv
 $tooldir/plot.py $commonFlags --var=swnet,lwnet,shflx --ylab=W/m2 --save=$outdir/fluxes.pdf $tmpdir/SIM.csv
 $tooldir/plot.py $commonFlags --var=CD_m,CD_t                     --save=$outdir/CD.pdf     $tmpdir/SIM.csv

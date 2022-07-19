@@ -35,7 +35,7 @@ parser.add_argument('-x','--x', action='store', required=True,
 parser.add_argument('-y','--y','--variable', action='append', required=True,
     help='variables to plot')
 parser.add_argument('--label', action='append', default=[],
-    help='list of settings to include in the legend; "var" means plotted variable name')
+    help='list of settings to include in the legend; "var-name" means plotted variable name')
 parser.add_argument('--xlimits', action='store', metavar='XS:XE',
     help='X limits for the plot')
 parser.add_argument('--ylimits', action='store', metavar='YS:YE',
@@ -50,7 +50,7 @@ parser.add_argument('--ylabel', action='store', default=None,
     help='Y axis label')
 parser.add_argument('--width',type=float, default=8.0,
     help='width of the plot')
-parser.add_argument('--aspect',type=float, default=1.0/1.618,
+parser.add_argument('--aspect',type=float, default=1.0/1.618, # default is "golden ratio"
     help='aspect (height/width) of the plot')
 parser.add_argument('--title', default=None,
     help='plot title')
@@ -118,7 +118,7 @@ for infile in args.input:
         label = []
         for t in tags:
             # add variable name
-            if t == 'var' :
+            if t == 'var-name' :
                 label.append(v)
             # continue
             # read namelist data for the legend
