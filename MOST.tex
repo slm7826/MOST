@@ -4,6 +4,8 @@
 \usepackage[hmargin={3cm,3cm},vmargin={2.5cm,2.5cm},marginparsep=2mm]{geometry}
 %\usepackage[showframe,pass]{geometry}  % shows frame but does not change page geometry
 
+\usepackage[scr=rsfso]{mathalfa}
+
 %\usepackage{ametsoc}
 \usepackage[intlimits]{amsmath}
 \usepackage{bm}
@@ -33,6 +35,7 @@ rightline=false
 \usepackage{siunitx}
 
 % + custom commands - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\newcommand{\bydef}{\stackrel{\text{def}}{=}}
 \newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}} % partial derivative
 \newcommand{\fderiv}[2]{\frac{d #1}{d #2}} % full derivative
 \newcommand{\vonkarman}{\kappa} % von Karman constant
@@ -42,7 +45,10 @@ rightline=false
 \newcommand{\tstar}{\ensuremath{\pt_*}} % buoyancy scale
 \newcommand{\zm}{z_{0m}} % roughness length for momentum
 \newcommand{\zh}{z_{0h}} % roughness length for heat
+\newcommand{\zR}{z_R} % roughness sublayer depth
 \newcommand{\fstab}{\phi} % stability correction
+\newcommand{\frsl}{\hat{\phi}} % roughness sublayer stability correction
+\newcommand{\FRSL}{\mathscr{F}} % integral roughness sublayer stability correction
 \newcommand{\rich}{\text{Ri}} % Richardson number
 \newcommand{\rcrit}{\rich_c} % critical Richardson number
 \newcommand{\rbulk}{\rich_b} % bulk Richardson number
@@ -304,11 +310,11 @@ Defining, for convenience, function
                           = \int_{\zeta_1}^{\zeta_2} \frac{\fstab_i(\zeta)}{\zeta} d \zeta
 \end{equation}
 we can rewrite~\eqref{eq:ribulk} as
-\begin{equation}\label{eqzeta}
+\begin{equation}\label{eq:zeta}
     f(\zeta_a) = \zeta_a \frac{F_h(\zeta_a \zh/z_a, \zeta_a)}{F_m(\zeta_a \zm/z_a,\zeta_a)^2} - \rbulk = 0
 \end{equation}
 
-FMS code solves nonlinear equation~\eqref{eqzeta} iteratively, to find the value of $\zeta_a = z_a/L$ that match boundary conditions. The solution procedure follows the Newton method, so on each iteration step, given a guess of $\zeta_0$, the step $\Delta \zeta$ is calculated as
+FMS code solves nonlinear equation~\eqref{eq:zeta} iteratively, to find the value of $\zeta_a = z_a/L$ that match boundary conditions. The solution procedure follows the Newton method, so on each iteration step, given a guess of $\zeta_0$, the step $\Delta \zeta$ is calculated as
 \begin{equation}
    f(\zeta_0) + \fderiv{f}{\zeta} \Delta \zeta = 0
 \end{equation}
@@ -341,7 +347,7 @@ Noting that
 \end{subequations}
 
 \begin{mdframed}
-An alternative mathematically equivalent form of equation~\eqref{eqzeta} would be
+An alternative mathematically equivalent form of equation~\eqref{eq:zeta} would be
 \begin{equation}
     f_1(\zeta) = \zeta F_h(\zeta \zh/z_a, \zeta) - \rbulk F_m(\zeta \zm/z_a,\zeta)^2 = 0
 \end{equation}
@@ -626,6 +632,132 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
 
    \caption[$\ustar$ vs wind speed, for $\zm=\SI{2}{\m}$.]{Dependence of $\ustar$ on wind speed, for high value of roughness $\zm=\SI{2}{\m}$.}
 \end{figure}
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\section{Roughness sublayer corrections}
+
+Roughness sublayer formulations need to introduce another length scale into consideration -- roughness sublayer depth $z_R$. The equation for vertical profile~\eqref{eq:u-profile} and~\eqref{eq:b-profile} then transform to
+\begin{subequations}\label{eq:profile-rsl}
+\begin{align}
+   \frac{\vonkarman z}{\ustar}\pderiv{u}{z} & = \fstab_m(z/L)\frsl_m(z/\zR) \\
+   \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} & = \fstab_h(z/L)\frsl_h(z/\zR)
+\end{align}
+\end{subequations}
+
+There are multiple forms of roughness correction function suggested  in literature; for example \cite{Ridder2010} gives
+\begin{equation}\label{eq:Ridder2010}
+    \frsl_i(z/z_R) = 1-\exp\left(-\mu_i\frac{z}{\zR}\right)
+\end{equation}
+where
+$i$ is either "$m$" for momentum and "$h$" for buoyancy.
+
+Ghannam (2022) proposes somewhat different formulation:
+\begin{equation}\label{eq:Ghannam2022}
+    \frsl_i(z/\zR) = 1-\mu_1 \exp\left(-\mu_i\frac{z}{\zR}\right)
+\end{equation}
+with $\mu_1 = 0.67$, $\mu_m = 2$, and $mu_t = 1$; he also defines $\zR$ in terms of vegetation properties.
+
+That is, since $\frsl_i < 1$, for the same $\ustar$ and $\tstar$ roughness sublayer correction reduces the vertical gradients, meaning that it increases turbulent diffusion coefficients. The effect is obviously stronger for smaller $z$.
+
+To obtain turbulent diffusion coefficients, one can write
+\begin{subequations}
+\begin{align}
+   (\overline{u'w'}) & = K_m \pderiv{u}{z} = \ustar^2
+   \\
+   (\overline{\pt'w'}) & = K_h \pderiv{\pt}{z} = \ustar\tstar
+\end{align}
+\end{subequations}
+%
+and substituting ${\partial u/\partial z}$ and ${\partial \pt/\partial z}$ from~\eqref{eq:profile-rsl}
+%
+\begin{subequations}
+\begin{align}
+   K_m & = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\fstab_m(z/L)\frsl_m(z/z_R)}
+   \\
+   K_h & = \frac{\ustar\tstar}{\partial \pt/\partial z} = \frac{\ustar \vonkarman z}{\fstab_h(z/L)\frsl_h(z/z_R)}
+\end{align}
+\end{subequations}
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\section{Solving for surface fluxes with RSL}
+
+Presumably the form of equations \eqref{eq:ribulk} does not change with introduction of surface roughness sublayer corrections, but the form of integral stability functions does change:
+\begin{align}
+  \FRSL_i(z,L,z_R) & = \int \frac{\fstab_i(z'/L)\frsl_i(z'/z_R)}{z'}  d z' \notag \\
+{} & = \int \frac{\fstab_i(z'/L)}{z'}  d z'
+                 - \int \frac{\fstab_i(z'/L)[1-\frsl_i(z'/z_R)]}{z'}  d z'
+\end{align}
+
+The first term of the above equation is exactly the form of integral stability function~\eqref{eq:Held-integral} in the formulation without roughness stability sublayer \citep{Held2004}.
+
+\begin{align}
+  \FRSL_i(z_1,z_2,L,z_R)
+    & \bydef \FRSL_i(z_2,L,z_R) - \FRSL_i(z_1,L,z_R) \notag \\
+    & = \int_{z_1}^{z_2} \frac{\fstab_i(z/L)}{z}  d z
+      - \int_{z_1}^{z_2} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z}  d z \notag \\
+    & = F_i(\zeta_1,\zeta_2) - \int_{z_1}^{z_2} \frac{\fstab_i(\zeta_a z/z_a)[1-\frsl_i(z/z_R)]}{z}  d z
+    \label{eq:FRSL}
+\end{align}
+where we used equivalence $\zeta_a = z_a/L$ under the integral in the last expression.
+Note that for $z_1 < z_2$ the second tem of~\eqref{eq:FRSL} is positive, so that $\FRSL_i(z_1,z_2,L,z_R) < F_i(\zeta_1,\zeta_2)$.
+
+To find $\zeta_a$ we can use the same equation for bulk Richardson number as before, except integral stability function must now include RSL correction:
+\begin{equation}\label{eq:zetaRSL}
+   g(\zeta_a) =
+   \zeta_a \frac{\FRSL_h(\zeta_a \zh/z_a, \zeta_a)}{\FRSL_m(\zeta_a \zm/z_a,\zeta_a)^2} - \rbulk = 0
+\end{equation}
+
+To apply the same Newton method of solution, we must estimate the derivative of the $g$ w.r.t. $\zeta_a$
+\begin{align}
+   \pderiv{g}{\zeta_a} & =
+    \frac{\FRSL_h}{\FRSL_m^2} + \zeta_a \frac{1}{\FRSL_m^2}\fderiv{\FRSL_h}{\zeta_a} - 2 \zeta_a \frac{\FRSL_h}{\FRSL_m^3}\fderiv{\FRSL_m}{\zeta_a}
+    \notag \\
+    {} & = \frac{\FRSL_h}{\FRSL_m^2} + \zeta_a \frac{1}{\FRSL_m^2}\fderiv{F_h}{\zeta_a} - 2 \zeta_a \frac{\FRSL_h}{\FRSL_m^3}\fderiv{F_m}{\zeta_a}
+                                  - \zeta_a \frac{1}{\FRSL_m^2}\fderiv{R_h}{\zeta_a} + 2 \zeta_a \frac{\FRSL_h}{\FRSL_m^3}\fderiv{R_m}{\zeta_a}
+    \notag \\
+    {} & = \zeta_a\frac{\FRSL_h}{\FRSL_m^2}
+        \bigg[
+            \frac{1}{\zeta_a}
+            + \frac{\fstab_h(\zeta_a)-\fstab_h(\zeta_a \zh/z_a)}{\zeta_a \FRSL_h}
+            - 2 \frac{\fstab_m(\zeta_a)-\fstab_m(\zeta_a \zm/z_a)}{\FRSL_m}
+        \bigg]
+    \notag \\
+    {} & \qquad \qquad \qquad - \zeta_a\frac{\FRSL_h}{\FRSL_m^2}\bigg[\frac{1}{\FRSL_h}\fderiv{R_h}{\zeta_a}-2\frac{1}{\FRSL_m}\pderiv{R_m}{\zeta_a}\bigg]
+    \label{eq:gderiv}
+\end{align}
+where we introduced notation
+\begin{equation}\label{eq:integralR}
+    R_i = \int_{z_{0i}}^{z_a} \frac{\fstab_i(\zeta_a z/z_a)[1-\frsl_i(z/z_R)]}{z}  d z
+\end{equation}
+for the second term in the right-hand side of equation~\eqref{eq:FRSL} to simplify notation. In this expression $z_{0i} = \zm$ for momentum, and $z_{0i} = \zh$ for heat.
+
+The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly the same form as in the original treatment without RSL in \eqref{eq:Fderiv2}; the derivatives of $R_m$ and $R_h$ are hard to estimate analytically, but they can be evaluated numerically.
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\subsubsection{Practical estimation of integral $R_i$}
+In the course of the numerical solution of equation~\eqref{eq:zetaRSL}, integrals $R_i$ \eqref{eq:integralR} must be estimated multiple times for every surface flux calculation. That makes the efficiency of this estimation an important factor. Obviously direct integration would likely to be computationally prohibitive. One could imagine tabulating the integral $R_i$ in a look-up table, but it depends on at least four parameters ($z_1$, $z_2$, $L$, and $z_R$) and a reasonably accurate look-up table would be huge.
+
+To facilitate the lookup table approach, $R_i$ can represented as a sum of two terms:
+Second term of equation~\eqref{eq:FRSL}
+\begin{align}
+    R_i(z_1,z_2,L,z_R)
+        & = \int_{z_1}^{z_2} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z}  d z \notag\\
+        & = \underbrace{\int_{z_1}^{\infty} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z} d z}_{I_i(z_1,L,z_R)}
+          - \underbrace{\int_{z_2}^{\infty} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z} d z}_{I_i(z_2,L,z_R)}
+        \label{eq:integralI}
+\end{align}
+with each of the integrals $I_i$ now depending on one less parameter.
+
+To make estimation of $I_i$ more convenient, we can make a substitution $z' = z/z_R$; $z=z_R z'$
+\begin{equation}
+    I_i (z_1/z_R,z_R/L) =
+        \int_{z_1/z_R}^\infty \fstab_i\left(\frac{z_R}{L}z'\right)\left[1-\frsl_i(z')\right]\frac{dz'}{z'}
+\end{equation}
+Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_2$ can be expressed in terms of that variable if necessary.
+
+Parameter $z_1/z_R$ is always positive; $z_R/L$ can be either positive or negative, depending on sign of $L$.
+
+When $z_1$ is close to zero, the function under the integral is not guaranteed to remain finite. Moreover, it may be proportional to $1/z$, which is easy to demonstrate in neutral case: $\fstab_i$ is 1, and $1-\frsl_i$ is also close to 1 when $z \to 0$. That means that when $z_1 \to 0$ the $I_{2,i} \to \infty$.
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \bibliographystyle{ametsoc}
