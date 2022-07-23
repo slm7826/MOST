@@ -1,7 +1,7 @@
 # EXECUTABLES = MOST.x phi.x SIM.x
-EXECUTABLES = test_integrate.x
-
-GARBAGE=$(EXECUTABLES)
+EXECUTABLES = MOST.x
+TESTS       = test_integrate.x
+GARBAGE=$(EXECUTABLES) $(TESTS)
 
 ifeq ($(FC),gfortran)
     FFLAGS = -ffree-line-length-none -fdefault-real-8 -fdefault-double-8 -Waliasing -I.
@@ -23,10 +23,11 @@ realclean: clean
 	rm -f input.nml *.out.txt
 
 # dependencies
-# $(EXECUTABLES)         : integrate.o monin_obukhov_kernel.o monin_obukhov_functions.o
-# monin_obukhov_kernel.o : monin_obukhov_functions.o
+$(EXECUTABLES)            : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o
+monin_obukhov_functions.o : rsl_functions.o
+monin_obukhov_kernel.o    : monin_obukhov_functions.o
+test_integrate.x          : integrate.o
 # rules
-$(EXECUTABLES)         : integrate.o
 %.x : %.o
 	$(FC) $(FFLAGS) $(DFLAGS) -o $@ $^
 

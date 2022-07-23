@@ -1,6 +1,8 @@
 module monin_obukhov_functions_mod
 ! #include <fms_platform.h>
 
+use rsl_functions_mod, only : rsl_functions_T
+
 implicit none
 private
 
@@ -13,12 +15,16 @@ type, abstract :: most_functions_T
   logical :: neutral = .FALSE. ! only true for neutral stability functions
   real :: rich_crit ! it is here because it is used in Monin-Obukhov solver for all stability options,
                     ! and in some stability functions
+  class(rsl_functions_T), pointer :: rsl => NULL () ! pointer to RSL functions
 contains
-  procedure(most_derivative_function), deferred :: derivative_m
-  procedure(most_derivative_function), deferred :: derivative_t
-  procedure(most_integral_m),          deferred :: integral_m
-  procedure(most_integral_tq),         deferred :: integral_tq
+  procedure(most_derivative_function), deferred :: derivative_m ! stability correction for momentum
+  procedure(most_derivative_function), deferred :: derivative_t ! stability correction for heat and tracers
+  procedure(most_integral_m),          deferred :: integral_m   ! integral stability correction for momentum
+  procedure(most_integral_tq),         deferred :: integral_tq  ! integral stability correction for heat and tracers
   procedure(most_stable_mix),          deferred :: stable_mix
+
+  procedure :: set_rsl_functions ! assign RSL functions and do preliminary calculations
+                                 ! (e.g. tabulate additive part of RSL integrals)
 end type most_functions_T
 
 abstract interface
@@ -102,6 +108,14 @@ contains
 end type brutsaert_functions_T
 
 contains ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+! --------------------------------------------------------------------------------------
+subroutine set_rsl_functions(this,rsl)
+  class(most_functions_T), intent(inout) :: this
+  class(rsl_functions_T),  pointer       :: rsl
+  this%rsl => rsl
+end subroutine set_rsl_functions
+
 
 ! ==== neutral stability option =========================================================
 function make_neutral_functions(rich_crit) result(ptr)

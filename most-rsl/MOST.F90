@@ -1,4 +1,5 @@
 program test
+  use rsl_functions_mod
   use monin_obukhov_functions_mod
   use monin_obukhov_kernel
 
@@ -25,8 +26,14 @@ program test
   logical :: neutral        = .false.
   real    :: zeta_trans     = 0.5
 
+  character(32) :: rsl_option = 'none'
+  real    :: rsl_mu_1 = 0.67 ! parameter of RSL correction
+  real    :: rsl_mu_m = 2.59 ! parameter of RSL momentum correction
+  real    :: rsl_mu_t = 0.95 ! parameter of RSL heat and tracer correction
+
   namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
-                               drag_min_moist, drag_min_mom, zeta_trans
+                               drag_min_moist, drag_min_mom, zeta_trans, &
+                               rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t
 
   real :: p_atm = 1e5
   real :: t_atm = 300.0
@@ -35,19 +42,21 @@ program test
   real :: z_atm = 17.5
   real :: z0m  = 0.1
   real :: k_over_B = 2.0
+  real :: zR = 1.0 ! roughness sublayer thickness, m
   real :: gust_factor = 1.0
   ! sampling parameters
   character(8) :: var = '' ! variable to sample
   real    :: x0 ! start of x axis
   real    :: x1 ! end of x axis
   integer :: nsamples ! number of intervals
-  namelist /most_nml/ p_atm, t_atm, t_sfc, u_atm, z_atm, z0m, k_over_B, gust_factor, &
+  namelist /most_nml/ p_atm, t_atm, t_sfc, u_atm, z_atm, z0m, k_over_B, zR, gust_factor, &
        var,x0,x1,nsamples
   ! - end of namelists
   integer :: ios
   integer :: n, i
   real    :: z0s
   class(most_functions_T), pointer :: most
+  class(rsl_functions_T),  pointer :: rsl
 
   ! inputs
   real,    dimension(1) :: z, z0, zt, zq, x
@@ -63,12 +72,20 @@ program test
   ! stability, while "deriv0" does not. Flux exchange actually uses "deriv0".
   integer :: ier
 
+  character(512) :: message
+
   ! read namelists
   open (701, file='input.nml')
-  read (701, monin_obukhov_nml, iostat=ios)
-  if (ios/=0) stop 'Error reading monin_obukhov_nml'
-  read (701, most_nml,          iostat=ios)
-  if (ios/=0) stop 'Error reading most_nml'
+  read (701, monin_obukhov_nml, iostat=ios, iomsg=message)
+  if (ios/=0) then
+     write (*,'(a)')'Error reading monin_obukhov_nml : '//trim(message)
+     stop 1
+  endif
+  read (701, most_nml, iostat=ios, iomsg=message)
+  if (ios/=0) then
+     write(*,'(a)')'Error reading most_nml : '//trim(message)
+     stop 1
+  endif
 
   write(*,*)'SETTINGS:'
   write(*,monin_obukhov_nml)
@@ -87,6 +104,21 @@ program test
      write (*,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
      stop 1
   end select
+
+  ! set up roughness sublayer (RSL) corrections
+  select case(trim(rsl_option))
+  case('none')
+     rsl=>NULL()
+  case('ridder2010')
+     rsl=>make_rsl_ridder2010_functions(rsl_mu_m,rsl_mu_t)
+  case('ghannam2022')
+     rsl=>make_rsl_ghannam2022_functions(rsl_mu_1,rsl_mu_m,rsl_mu_t)
+  case default
+     write (*,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
+     stop 1
+  end select
+  call most%set_rsl_functions(rsl)
+
   z0s = z0m*exp(-k_over_B)
   n = 1; avail = .TRUE.
   u_atm1 = u_atm
