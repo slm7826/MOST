@@ -1,5 +1,5 @@
 # EXECUTABLES = MOST.x phi.x SIM.x
-EXECUTABLES = MOST.x
+EXECUTABLES = MOST.x evaluate_RSL_I.x
 TESTS       = test_integrate.x
 GARBAGE=$(EXECUTABLES) $(TESTS)
 
@@ -24,7 +24,7 @@ realclean: clean
 
 # dependencies
 $(EXECUTABLES)            : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o
-monin_obukhov_functions.o : rsl_functions.o
+monin_obukhov_functions.o : rsl_functions.o integrate.o
 monin_obukhov_kernel.o    : monin_obukhov_functions.o
 test_integrate.x          : integrate.o
 # rules
