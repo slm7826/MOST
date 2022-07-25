@@ -6,7 +6,7 @@ program test
   implicit none
 
   real :: a, b, rtol, exact
-
+  real, parameter :: pi = 3.14159265358979
   rtol=1e-8
 
   a = 1.0; b=2.0; exact = 1.0
@@ -32,6 +32,12 @@ program test
 
   a = 1.0; b=HUGE(1.0)*1e-4; exact = 0.2193839343955202736771637754601216490310472934069082075779
   call test_integrate(fexp1,'f = exp(-x)/x',a,b,rtol,exact)
+
+  a = 2*pi; b=3*pi; exact = cos(a)-cos(b)
+  call test_integrate(fsin,'f = sin(x)',a,b,rtol,exact)
+
+  a = 0; b=pi; exact = cos(a)-cos(b)
+  call test_integrate(fsin,'f = sin(x)',a,b,rtol,exact)
 
 contains
 
@@ -94,6 +100,11 @@ real function fexp1(x) result(f)
     real, intent(in) :: x
     f = exp(-x)/x
 end function fexp1
+
+real function fsin(x) result(f)
+    real, intent(in) :: x
+    f = sin(x)
+end function fsin
 
 end program test
 
