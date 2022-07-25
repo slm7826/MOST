@@ -744,7 +744,7 @@ Second term of equation~\eqref{eq:FRSL}
         & = \int_{z_1}^{z_2} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z}  d z \notag\\
         & = \underbrace{\int_{z_1}^{\infty} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z} d z}_{I_i(z_1,L,z_R)}
           - \underbrace{\int_{z_2}^{\infty} \frac{\fstab_i(z/L)[1-\frsl_i(z/z_R)]}{z} d z}_{I_i(z_2,L,z_R)}
-        \label{eq:integralI}
+        \label{eq:integralR}
 \end{align}
 with each of the integrals $I_i$ now depending on one less parameter.
 
@@ -752,8 +752,65 @@ To make estimation of $I_i$ more convenient, we can make a substitution $z' = z/
 \begin{equation}
     I_i (z_1/z_R,z_R/L) =
         \int_{z_1/z_R}^\infty \fstab_i\left(\frac{z_R}{L}z'\right)\left[1-\frsl_i(z')\right]\frac{dz'}{z'}
+    \label{eq:integralI}
 \end{equation}
-Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_2$ can be expressed in terms of that variable if necessary.
+Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_2$ can be expressed in terms of that variable if necessary. Figure~\ref{fig:integralIm} shows the integral $I_m$ --- with typical AM4/ESM4 $\fstab_m$ and Ghannam (2002) $\frsl_m$ --- as a function of $1/L$, $z_R/z_a$, and $z_a/z_R$ for some ranges of parameters. \todo[inline]{Calculations of $I_i$ vs $1/L$ take much longer for $z_R = \SI{1}{\m}$ (\SI{48}{\s} vs $<\SI{1}{s}$). It is not clear why: perhaps function is too sharp around zero? or relative precision canot be achieved, becase function values are too small?}
+
+\begin{figure}
+  \centering
+  \subfloat[dependence of $I_m$ of $1/L$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_L.pdf}
+  }
+  \subfloat[same as (a), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_L_log.pdf}
+  }
+
+  \subfloat[dependence of $I_m$ of $z_R$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_zR.pdf}
+  }
+  \subfloat[same as (c), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_zR_log.pdf}
+  }
+
+  \subfloat[dependence of $I_m$ of $z_a/z_R$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_zzR.pdf}
+  }
+  \subfloat[same as (e), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_m_vs_zzR_log.pdf}
+  }
+  \caption[$I_m$ vs various parameters]{
+Dependence of RSL integral $I_m(z_a/z_R,z_R/L)$%~\eqref{eq:integralI} for typical model settings on $1/L$ and $z_R$.
+The formulation of RSL correction $\frsl_m$ is taken to be from Ghannam (2002) [see equation~\eqref{eq:Ghannam2022}],
+while stability correction $\fstab_m$ is as in typical ESM4/AM4 settings [stable option 2]. Top of the constant flux
+layer $z_a$ was assumed to be \SI{17.5}{\m}.}
+  \label{fig:integralIm}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \subfloat[dependence of $I_h$ of $1/L$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_L.pdf}
+  }
+  \subfloat[same as (a), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_L_log.pdf}
+  }
+
+  \subfloat[dependence of $I_h$ of $z_R$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_zR.pdf}
+  }
+  \subfloat[same as (c), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_zR_log.pdf}
+  }
+
+  \subfloat[dependence of $I_h$ of $z_a/z_R$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_zzR.pdf}
+  }
+  \subfloat[same as (e), but on log scale]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_zzR_log.pdf}
+  }
+  \caption[$I_t$ vs various parameters]{Same as in Figure~\ref{fig:integralIm} except for heat integral $I_h$}
+  \label{fig:integralIh}
+\end{figure}
 
 Parameter $z_1/z_R$ is always positive; $z_R/L$ can be either positive or negative, depending on sign of $L$.
 
