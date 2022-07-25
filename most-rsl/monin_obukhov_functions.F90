@@ -1,5 +1,8 @@
 module monin_obukhov_functions_mod
 
+use, intrinsic :: ieee_arithmetic
+
+use integrate_mod, only : integrate_romberg_midpoint_inv
 use rsl_functions_mod, only : rsl_functions_T
 
 implicit none
@@ -8,6 +11,9 @@ private
 public :: most_functions_T
 public :: make_most1_functions, make_most2_functions, make_brutsaert_functions, &
           make_neutral_functions
+! not sure if these should remain public in the final code. They are used in the
+! document to plot the dependence of the integral of various parameters
+public :: RSL_integral_I_m, RSL_integral_I_t
 
 ! representation of Monin-Obukhov Similarity Theory (MOST) stability correction functions
 type, abstract :: most_functions_T
@@ -101,6 +107,10 @@ contains
   procedure :: integral_q   => brutsaert_integral_tq
   procedure :: stable_mix   => brutsaert_stable_mix
 end type brutsaert_functions_T
+
+real, parameter :: &
+  RSL_UPPER_LIMIT = HUGE(1.0)*1e-4, & ! actual upper limit when integrating RSL corrections to "infinity"
+  RSL_RTOL        = 1e-8              ! relative tolerance for RSL integrals; setting it to 1e-7 or below results in significant artifacts
 
 contains ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -486,7 +496,7 @@ pure subroutine most2_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   real   , intent(inout), dimension(n)  :: F
   integer, intent(  out)                :: ier
 
-  real, dimension(n)     :: x, x_t, x_q
+  real, dimension(n)     :: x, x_t
   logical, dimension(n)  :: stable, unstable, &
                              weakly_stable, strongly_stable
   real                   :: b_stab, lambda
@@ -697,5 +707,78 @@ pure subroutine brutsaert_stable_mix(this, n, rich, mix, ier)
 
   ier = 1
 end subroutine brutsaert_stable_mix
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!> \brief Calculate RSL integral I for momentum
+!!
+!! given parameters a = z_atm/z_RRL and b = z_R/L, calculates the RSL integral I_m
+!! for momentum
+!! I_m = \int_a^\infty \phi_m (b z) (1-phi_{RSL,m}(z))/z dz
+subroutine RSL_integral_I_m(most,a,b,s,ierr)
+  class(most_functions_T), intent(in) :: most
+  real, intent(in)     :: a    !< parameter of the integral, z_1/z_R
+  real, intent(in)     :: b    !< parameter of the integral, z_R/L
+  real, intent(out)    :: s    !< value of the integral
+  integer, intent(out) :: ierr !< error code
+
+  if (.not.associated(most%rsl)) then
+     s = 0.0; ierr = 0
+     return
+  endif
+  call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+contains
+  real function f(x)
+     real, intent(in) :: x
+
+     real,    dimension(1) :: zeta,phi,rsl
+     logical, dimension(1) :: mask
+
+     mask=.TRUE.
+     zeta = x*b
+     call most%derivative_m(1,mask,zeta,phi,ierr)
+     rsl = most%rsl%rsl_m(x)
+     f = phi(1)*(1-rsl(1))/x
+     if (.not.ieee_is_finite(f)) then
+        write(*,*) 'input = ',x
+        write(*,*) 'f = ', f, phi, rsl
+        stop
+     endif
+
+!      write(*,*) zeta, x, phi, rsl, f, ierr
+  end function f
+end subroutine RSL_integral_I_m
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!> \brief Calculate RSL integral I for heat
+!!
+!! given parameters a = z_atm/z_RRL and b = z_R/L, calculates the RSL integral I_t
+!! for heat
+!! I_t = \int_a^\infty \phi_t (b z) (1-phi_{RSL,t}(z))/z dz
+subroutine RSL_integral_I_t(most,a,b,s,ierr)
+  class(most_functions_T), intent(in) :: most
+  real, intent(in)     :: a    !< parameter of the integral, z_1/z_R
+  real, intent(in)     :: b    !< parameter of the integral, z_R/L
+  real, intent(out)    :: s    !< value of the integral
+  integer, intent(out) :: ierr !< error code
+
+  if (.not.associated(most%rsl)) then
+     s = 0.0; ierr = 0
+     return
+  endif
+  call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+contains
+  real function f(x)
+     real, intent(in) :: x
+
+     real,    dimension(1) :: zeta,phi,rsl
+     logical, dimension(1) :: mask
+
+     mask=.TRUE.
+     zeta = x*b
+     call most%derivative_t(1,mask,zeta,phi,ierr)
+     rsl = most%rsl%rsl_t(x)
+     f = phi(1)*(1-rsl(1))/x
+  end function f
+end subroutine RSL_integral_I_t
 
 end module monin_obukhov_functions_mod
