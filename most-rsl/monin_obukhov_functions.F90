@@ -128,7 +128,7 @@ end subroutine set_rsl_functions
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! calculate the value of integral stability function for momentum for given parameters
-subroutine integral_m_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
+pure subroutine integral_m_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
    class(most_functions_T), intent(in) :: this
 ! the arguments are weird, because we try to preserve bitwise compatibility with
 ! original code, and therefore avoid changing order of operations
@@ -175,7 +175,7 @@ subroutine integral_m_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, 
    enddo
 end subroutine integral_m_with_rsl
 
-subroutine integralR_m_rsl(most,z0,za,z_rsl,zeta, s, ierr)
+pure subroutine integralR_m_rsl(most,z0,za,z_rsl,zeta, s, ierr)
   class(most_functions_T), intent(in) :: most
   real, intent(in)     :: z0, za, z_rsl, zeta
   real, intent(out)    :: s
@@ -186,22 +186,23 @@ subroutine integralR_m_rsl(most,z0,za,z_rsl,zeta, s, ierr)
 
 contains
   ! internal function that returns the integrand
-  real function f1(x)
+  pure real function f1(x)
      real, intent(in) :: x
 
      logical :: mask(1)
      real    :: zeta1(1),phi(1)
      real    :: rsl
+     integer :: ierr_ignored
 
      mask  = .TRUE.
      zeta1 = zeta
-     call most%derivative_m(1,mask,x*zeta1/za,phi,ierr)
+     call most%derivative_m(1,mask,x*zeta1/za,phi,ierr_ignored)
      rsl = most%rsl%rsl_m(x/z_rsl)
      f1 = phi(1)*(1-rsl)/x
   end function f1
 end subroutine integralR_m_rsl
 
-subroutine integralR_t_rsl(most,z0,za,z_rsl,zeta, s, ierr)
+pure subroutine integralR_t_rsl(most,z0,za,z_rsl,zeta, s, ierr)
   class(most_functions_T), intent(in) :: most
   real, intent(in) :: z0, za, z_rsl, zeta
   real, intent(out) :: s
@@ -212,16 +213,17 @@ subroutine integralR_t_rsl(most,z0,za,z_rsl,zeta, s, ierr)
 
 contains
   ! internal function that returns the integrand
-  real function f1(x)
+  pure real function f1(x)
      real, intent(in) :: x
 
      logical :: mask(1)
      real    :: zeta1(1),phi(1)
      real    :: rsl
+     integer :: ierr_ignored
 
      mask  = .TRUE.
      zeta1 = zeta
-     call most%derivative_t(1,mask,x*zeta1/za,phi,ierr)
+     call most%derivative_t(1,mask,x*zeta1/za,phi,ierr_ignored)
      rsl = most%rsl%rsl_t(x/z_rsl)
      f1 = phi(1)*(1-rsl)/x
   end function f1
@@ -229,7 +231,7 @@ end subroutine integralR_t_rsl
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! calculate the value of integral stability function for momentum for given parameters
-subroutine integral_t_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
+pure subroutine integral_t_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
    class(most_functions_T), intent(in) :: this
 ! the arguments are weird, because we try to preserve bitwise compatibility with
 ! original code, and therefore avoid changing order of operations
@@ -880,22 +882,23 @@ subroutine RSL_integral_I_m(most,a,b,s,ierr)
   endif
   call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
 contains
-  real function f(x)
+  pure real function f(x)
      real, intent(in) :: x
 
      real,    dimension(1) :: zeta,phi,rsl
      logical, dimension(1) :: mask
+     integer :: ierr_ignored
 
      mask=.TRUE.
      zeta = x*b
-     call most%derivative_m(1,mask,zeta,phi,ierr)
+     call most%derivative_m(1,mask,zeta,phi,ierr_ignored)
      rsl = most%rsl%rsl_m(x)
      f = phi(1)*(1-rsl(1))/x
-     if (.not.ieee_is_finite(f)) then
-        write(*,*) 'input = ',x
-        write(*,*) 'f = ', f, phi, rsl
-        stop
-     endif
+!      if (.not.ieee_is_finite(f)) then
+!         write(*,*) 'input = ',x
+!         write(*,*) 'f = ', f, phi, rsl
+!         stop
+!      endif
 
 !      write(*,*) zeta, x, phi, rsl, f, ierr
   end function f
@@ -920,15 +923,16 @@ subroutine RSL_integral_I_t(most,a,b,s,ierr)
   endif
   call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
 contains
-  real function f(x)
+  pure real function f(x)
      real, intent(in) :: x
 
      real,    dimension(1) :: zeta,phi,rsl
      logical, dimension(1) :: mask
+     integer :: ierr_ignored
 
      mask=.TRUE.
      zeta = x*b
-     call most%derivative_t(1,mask,zeta,phi,ierr)
+     call most%derivative_t(1,mask,zeta,phi,ierr_ignored)
      rsl = most%rsl%rsl_t(x)
      f = phi(1)*(1-rsl(1))/x
   end function f
