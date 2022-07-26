@@ -18,7 +18,8 @@ tmpdir=$outdir/vs_zR
 mkdir -p $tmpdir
 rm -f $tmpdir/*.csv
 i=1
-for x in -10.0 -5.0 -1.0 0.0 1.0 5.0 10.0
+# for x in -10.0 -5.0 -1.0 0.0 1.0 5.0 10.0
+for x in 10.0 5.0 1.0 0.0 -1.0 -5.0 -10.0
 do
    cat <<EOF > input.nml
  &monin_obukhov_nml

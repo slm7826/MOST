@@ -761,27 +761,27 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
 
 \begin{figure}
     \centering
-    \subfloat[dependence of $\FRSL_t$ of $1/L$]{
+    \subfloat[dependence of $\FRSL_h$ of $1/L$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_L.pdf}
     }
     \subfloat[same as (a), but on log scale]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_L_log.pdf}
     }
 
-    \subfloat[dependence of $\FRSL_t$ of $z_R/z_a$]{
+    \subfloat[dependence of $\FRSL_h$ of $z_R/z_a$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zR.pdf}
     }
     \subfloat[same as (c), but on log scale]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zR_log.pdf}
     }
 
-    \subfloat[dependence of $\FRSL_t$ of $z_a/z_R$]{
+    \subfloat[dependence of $\FRSL_h$ of $z_a/z_R$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zzR.pdf}
     }
     \subfloat[same as (e), but on log scale]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zzR_log.pdf}
     }
-    \caption[Intergral with RSL corrections $\FRSL_t$ vs $1/L$ and $z_R$]{Same as Figure~\ref{fig:FRSLm}, but for heat RSL integral $\FRSL_t$.}
+    \caption[Intergral with RSL corrections $\FRSL_h$ vs $1/L$ and $z_R$]{Same as Figure~\ref{fig:FRSLm}, but for heat RSL integral $\FRSL_h$.}
     \label{fig:FRSLt}
 \end{figure}
 
@@ -790,27 +790,27 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
     \subfloat[ratio $\FRSL_m/F_m$, depending on $1/L$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_L.pdf}
     }
-    \subfloat[ratio $\FRSL_t/F_t$, depending on $1/L$]{
+    \subfloat[ratio $\FRSL_h/F_t$, depending on $1/L$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_L.pdf}
     }
 
     \subfloat[ratio $\FRSL_m/F_m$, depending on $z_R/z_a$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_zR.pdf}
     }
-    \subfloat[ratio $\FRSL_t/F_t$, depending on $z_R/z_a$]{
+    \subfloat[ratio $\FRSL_h/F_t$, depending on $z_R/z_a$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_zR.pdf}
     }
 
     \subfloat[ratio $\FRSL_m/F_m$, depending on $z_a/z_R$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_zzR.pdf}
     }
-    \subfloat[ratio $\FRSL_t/F_t$, depending on $z_a/z_R$]{
+    \subfloat[ratio $\FRSL_h/F_t$, depending on $z_a/z_R$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_zzR.pdf}
     }
     \caption{Ratio of $\FRSL_m/F_m$ and $\FRSL_h/F_h$, depending on $1/L$ and $z_R$}
 \end{figure}
 
-Figure~\ref{fig:FRSLm} shows the dependence of momentum integral $\FRSL_m$ on a number of parameters; Figure~\ref{fig:FRSLt} does the same for heat integral $\FRSL_t$.
+Figure~\ref{fig:FRSLm} shows the dependence of momentum integral $\FRSL_m$ on a number of parameters; Figure~\ref{fig:FRSLt} does the same for heat integral $\FRSL_h$.
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsubsection{Practical estimation of integral $R_i$}
@@ -895,6 +895,7 @@ Parameter $z_1/z_R$ is always positive; $z_R/L$ can be either positive or negati
 
 When $z_1$ is close to zero, the function under the integral is not guaranteed to remain finite. Moreover, it may be proportional to $1/z$, which is easy to demonstrate in neutral case: $\fstab_i$ is 1, and $1-\frsl_i$ is also close to 1 when $z \to 0$. That means that when $z_1 \to 0$ the $I_{2,i} \to \infty$.
 
+Figures~\ref{fig:integralIm} and~\ref{fig:integralIh} indicate that the integrals $I_i$ are fairly well-behaved along the $z_R/z_a$ axis, but they have very steep derivatives with respect to $1/L$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $1/L$ near zero, or to make some appropriate substitution of variable to make them better behaved.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \bibliographystyle{ametsoc}
 \bibliography{MOST}

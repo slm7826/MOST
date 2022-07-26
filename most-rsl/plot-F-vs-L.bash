@@ -18,8 +18,8 @@ tmpdir=$outdir/vs_L
 mkdir -p $tmpdir
 rm -f $tmpdir/*.csv
 i=1
-for x in 0.1 0.5 1.0 2.0 5.0 10.0 20.0
-# for x in 17.5 8.75 4.0 2.0 1.0
+# for x in 0.1 0.5 1.0 2.0 5.0 10.0 20.0
+for x in 17.5 8.75 4.0 2.0 1.0
 do
    echo z_R = $x
    cat <<EOF > input.nml
@@ -40,7 +40,7 @@ EOF
 done
 
 echo 'Plotting integralR vs L ...'
-commonFlags="--x=1/L --label=z_R/z_a,z_a/z_R"
+commonFlags="--x=1/L --label=z_R,z_R/z_a,z_a/z_R"
 $tooldir/plot.py $commonFlags --y=full_integral_m         --save=$outdir/F_m_vs_L.pdf       $tmpdir/*.csv
 $tooldir/plot.py $commonFlags --y=full_integral_m  --ylog --save=$outdir/F_m_vs_L_log.pdf   $tmpdir/*.csv
 $tooldir/plot.py $commonFlags --y=rsl_m_ratio             --save=$outdir/F_m_ratio_vs_L.pdf $tmpdir/*.csv
