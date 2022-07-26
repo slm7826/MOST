@@ -71,37 +71,37 @@ subroutine test_integrate(f,description,a,b,rtol,exact)
 100 format(a24,g23.16,'  error=',g11.4,'  ierr=',i1,'  N steps=',i9,'  Refinement degrees=',i2)
 end subroutine test_integrate
 
-real function f0(x) result(f)
+pure real function f0(x) result(f)
     real, intent(in) :: x
     f = 1
 end function f0
 
-real function f1(x) result(f)
+pure real function f1(x) result(f)
     real, intent(in) :: x
     f = x
 end function f1
 
-real function f2(x) result(f)
+pure real function f2(x) result(f)
     real, intent(in) :: x
     f = x**2
 end function f2
 
-real function f3(x) result(f)
+pure real function f3(x) result(f)
     real, intent(in) :: x
     f = x**3
 end function f3
 
-real function fexp(x) result(f)
+pure real function fexp(x) result(f)
     real, intent(in) :: x
     f = exp(-x)
 end function fexp
 
-real function fexp1(x) result(f)
+pure real function fexp1(x) result(f)
     real, intent(in) :: x
     f = exp(-x)/x
 end function fexp1
 
-real function fsin(x) result(f)
+pure real function fsin(x) result(f)
     real, intent(in) :: x
     f = sin(x)
 end function fsin
