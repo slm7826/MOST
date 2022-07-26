@@ -733,6 +733,85 @@ for the second term in the right-hand side of equation~\eqref{eq:FRSL} to simpli
 
 The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly the same form as in the original treatment without RSL in \eqref{eq:Fderiv2}; the derivatives of $R_m$ and $R_h$ are hard to estimate analytically, but they can be evaluated numerically.
 
+\begin{figure}
+    \centering
+    \subfloat[dependence of $\FRSL_m$ of $1/L$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_L.pdf}
+    }
+    \subfloat[same as (a), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_L_log.pdf}
+    }
+
+    \subfloat[dependence of $\FRSL_m$ of $z_R/z_a$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_zR.pdf}
+    }
+    \subfloat[same as (c), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_zR_log.pdf}
+    }
+
+    \subfloat[dependence of $\FRSL_m$ of $z_a/z_R$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_zzR.pdf}
+    }
+    \subfloat[same as (e), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_zzR_log.pdf}
+    }
+    \caption[Intergral with RSL corrections $\FRSL_m$ vs $1/L$ and $z_R$]{Dependence of RSL integral $\FRSL_m$ for typical model settings on $1/L$ and $z_R$. Top of the constant flux layer $z_a$ was assumed to be \SI{17.5}{\m}, roughness length for momentum $z_0 = \SI{1}{\m}$, and for heat $z_{0s}\approx\SI{0.135}{\m}$ ($k/B = 2.0$). Note that as $z_R \to 0$ contribution of RSL becomes small, so $\FRSL \to F$.}
+    \label{fig:FRSLm}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[dependence of $\FRSL_t$ of $1/L$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_L.pdf}
+    }
+    \subfloat[same as (a), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_L_log.pdf}
+    }
+
+    \subfloat[dependence of $\FRSL_t$ of $z_R/z_a$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zR.pdf}
+    }
+    \subfloat[same as (c), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zR_log.pdf}
+    }
+
+    \subfloat[dependence of $\FRSL_t$ of $z_a/z_R$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zzR.pdf}
+    }
+    \subfloat[same as (e), but on log scale]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zzR_log.pdf}
+    }
+    \caption[Intergral with RSL corrections $\FRSL_t$ vs $1/L$ and $z_R$]{Same as Figure~\ref{fig:FRSLm}, but for heat RSL integral $\FRSL_t$.}
+    \label{fig:FRSLt}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[ratio $\FRSL_m/F_m$, depending on $1/L$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_L.pdf}
+    }
+    \subfloat[ratio $\FRSL_t/F_t$, depending on $1/L$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_L.pdf}
+    }
+
+    \subfloat[ratio $\FRSL_m/F_m$, depending on $z_R/z_a$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_zR.pdf}
+    }
+    \subfloat[ratio $\FRSL_t/F_t$, depending on $z_R/z_a$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_zR.pdf}
+    }
+
+    \subfloat[ratio $\FRSL_m/F_m$, depending on $z_a/z_R$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_ratio_vs_zzR.pdf}
+    }
+    \subfloat[ratio $\FRSL_t/F_t$, depending on $z_a/z_R$]{
+        \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_zzR.pdf}
+    }
+    \caption{Ratio of $\FRSL_m/F_m$ and $\FRSL_h/F_h$, depending on $1/L$ and $z_R$}
+\end{figure}
+
+Figure~\ref{fig:FRSLm} shows the dependence of momentum integral $\FRSL_m$ on a number of parameters; Figure~\ref{fig:FRSLt} does the same for heat integral $\FRSL_t$.
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsubsection{Practical estimation of integral $R_i$}
 In the course of the numerical solution of equation~\eqref{eq:zetaRSL}, integrals $R_i$ \eqref{eq:integralR} must be estimated multiple times for every surface flux calculation. That makes the efficiency of this estimation an important factor. Obviously direct integration would likely to be computationally prohibitive. One could imagine tabulating the integral $R_i$ in a look-up table, but it depends on at least four parameters ($z_1$, $z_2$, $L$, and $z_R$) and a reasonably accurate look-up table would be huge.
@@ -808,7 +887,7 @@ layer $z_a$ was assumed to be \SI{17.5}{\m}.}
   \subfloat[same as (e), but on log scale]{
       \includegraphics[width=\panelW]{most-rsl/output/integral_I/I_t_vs_zzR_log.pdf}
   }
-  \caption[$I_t$ vs various parameters]{Same as in Figure~\ref{fig:integralIm} except for heat integral $I_h$}
+  \caption[$I_h$ vs various parameters]{Same as in Figure~\ref{fig:integralIm} except for heat integral $I_h$}
   \label{fig:integralIh}
 \end{figure}
 
