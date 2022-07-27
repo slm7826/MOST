@@ -164,7 +164,7 @@ pure subroutine monin_obukhov_drag_1d(most, grav, vonkarm,      &
 
      mask_1 = mask .and. rich <  r_crit
      mask_2 = mask .and. rich >= r_crit
-
+!      write(*,*) rich, r_crit
      do i = 1, n
         if(mask_2(i)) then
            drag_m(i)   = drag_min_mom
@@ -218,6 +218,7 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
 
   real    :: max_cor
   integer :: iter
+!   integer :: i
 
   real, dimension(n) ::   &
        d_rich, rich_1, correction, corr, z_z0, z_zt, z_zq, &
@@ -247,6 +248,7 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
      zeta = zeta/(1.0 - rich/most%rich_crit)
   end where
 
+!   write(*,'("init", 99(2x,a,"=",g13.6))') 'rich',rich, 'zeta',zeta, 'zeta_min', zeta_min, 'mask_1',mask_1
   iter_loop: do iter = 1, max_iter
      ! handle points in neutral or near-neutral condition. Note that with RSL the profile
      ! is only logarithmic where zR == 0
@@ -275,6 +277,10 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
 
      max_cor= maxval(corr)
 
+!      do i = 1,n
+!         if (mask_1(i)) &
+!              write(*,'(i2,99(2x,a,"=",g13.6))') iter, 'zeta',zeta, 'rich1',rich_1, 'd_rich',d_rich, 'zeta_1',zeta+correction
+!      enddo
      if(max_cor > error) then
         mask_1 = mask_1 .and. (corr > error)
         ! change the mask so computation proceeds only on non-converged points
