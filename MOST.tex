@@ -247,7 +247,7 @@ For unstable case
 where $y=-\zeta$, $a_u = 0.33$, $b_u = 0.41$, $c_u = 0.33$, $d_u = 0.057$, and $n_u = 0.78$.
 
 In stable case
-\begin{equation}
+\begin{equation}\label{eq:brutsaert-stable}
     \fstab_m(\zeta) = \fstab_h(\zeta)
         = 1 + a_s \frac{\zeta + \zeta^{b_s}(1+\zeta^{b_s})^{-1+1/b_s}}
                        {\zeta + (1+\zeta^{b_s})^{1/b_s}}
@@ -291,7 +291,7 @@ Following \cite{Held2004} note, bulk Richardson number can be calculated from kn
     \rbulk = z_a\frac{b(z_a)-b(0)}{u(z_a)^2} = g z_a \frac{\theta_v(z_a)-\theta_v(0)}{\theta_v(0)u(z_a)^2}
 \end{equation}
 where
-$z_a$ is the height of the height of the lowest atmospheric layer, and  $\zeta_a = z_a/L$.
+$z_a$ is the height of the lowest atmospheric layer, and  $\zeta_a = z_a/L$.
 
 On the other hand, the same bulk Richardson function can be expressed in terms of integral stability functions~\eqref{eq:Held-integral}
 \begin{equation}\label{eq:ribulk}
@@ -362,7 +362,8 @@ This is not the expression that the code is using, though. Not sure why, it look
 The only disadvantage that I can see is that it includes $1/\zeta$ term that may cause problems at $\zeta=0$; the equation~\eqref{eq:Fderiv1} does not, although the code uses the form~\eqref{eq:Fderiv2}.
 \end{mdframed}
 
-\subsection{Convergence near $\rcrit$}
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\subsection{Convergence near $\rcrit$}\label{sect:convergence}
 One issue --- also pointed out in \cite{Held2004} --- is the convergence near $\rbulk \approx \rcrit$ for some forms of stability functions. To illustrate the problem, consider the stable option 2 described in section~\ref{sect:stable2}, and assume for simplicity that $\zm=\zh$. For the values of $\zeta > \zeta_t$ the stability correction functions are
 \begin{equation}
    \fstab_m = \fstab_h = a + b \zeta
@@ -371,9 +372,9 @@ where $a=1+(5-b) \zeta_t$ and $b=\rcrit^{-1}$.
 
 Since in our case
 \begin{equation}
-    F_h = F_m
-        = \int \frac{a+b\zeta}{\zeta} d \zeta
-        = a \ln \zeta + b \zeta + C
+    F_h(\zeta_1,\zeta_2) = F_m(\zeta_1,\zeta_2)
+        = \int_{\zeta_1}^{\zeta_2} \frac{a+b\zeta}{\zeta} d \zeta
+        = a \ln \frac{\zeta_2}{\zeta_1} + b (\zeta_2-\zeta_1)
 \end{equation}
 equation~\eqref{eq:zeta} becomes
 \begin{equation}
@@ -381,7 +382,35 @@ equation~\eqref{eq:zeta} becomes
            = \frac{\zeta_a}{a \ln(z_a/\zm) + b(1-\zm/z_a)\zeta_a}
 \end{equation}
 
-With $a \ln(z_a/\zm) > 0$, the equation above describes a monotonically increasing curve with upper limit $\rcrit (1-\zm/z_a)^{-1}$. Therefore, for values of $\rbulk$ from~\eqref{eq:ribulk0} larger that $\rcrit$ equation~\eqref{eq:zeta} would not converge. \cite{Held2004} notes that the convergence would also be slow in the vicinity of $\rcrit$.
+With $a \ln(z_a/\zm) > 0$, the equation above describes a monotonically increasing curve with upper limit $\rich_{\max} = \rcrit (1-\zm/z_a)^{-1}$ at $\zeta_a \to \infty$. Therefore, for values of $\rbulk$ from~\eqref{eq:ribulk0} larger that $\rich_{\max}$ equation~\eqref{eq:zeta} would not converge. \cite{Held2004} notes that the convergence would also be slow in the vicinity of $\rcrit$.
+
+\cite{Brutsaert2005} stability correction function has a different asymptotic behavior, stabilizing at constant value as $\zeta \to +\infty$ (equation~\eqref{eq:brutsaert-stable} and Figure~\ref{fig:stability-corrections}); therefore it should not have this convergence issue.
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\subsection{Implementation details}
+
+The solver for the equations described in this section is implemented in two subroutines, \verb|monin_obukhov_drag_1d| which calls \verb|monin_obukhov_solve_zeta|. The upper level subroutine \verb|monin_obukhov_drag_1d| first evaluates the bulk Richardson number using modified equation~\eqref{eq:ribulk0}
+\begin{equation}
+    \rbulk = z_a\frac{b(z_a)-b(0)}{u(z_a)^2+u_s^2} = g z_a \frac{\theta_v(z_a)-\theta_v(0)}{\theta_v(0)u(z_a)^2+u_s^2}
+\end{equation}
+where $u_s^2$ is a constant equal to \SI{e-4}{\m\squared\per\s\squared}, hardcoded in \verb|mo_drag_1d|.
+
+For the case of netral stability correction functions, the solution of~\eqref{eq:zeta} is bypassed and the drag coefficients are calculated using the logarithmic profiles.
+
+The solver is aware of the convergence issues with stability functions described in section~\ref{sect:convergence}: if $\rbulk \ge 0.95 \times \rcrit$, the code does not attempt to solve~\eqref{eq:zeta}, but instead assigns specified minimum drag coefficients (controlled by parameters \verb|drag_min_{heat,moist,mom}| in \verb|monin_obukhov_nml|, \num{e-5} for all three by default). This is unfortunate, since this special treatment is applied to all stability correction options (except neutral), even for those that do not critically depend on or use $\rcrit$, such as \cite{Brutsaert2005}. Presumably this the reason for the discontinuity in $\ustar$ around $T_{sfc}\approx \SI{298.3}{\K}$ for low wind speed in Figures~\ref{fig:small-z0-ustar} and~\ref{fig:large-z0-ustar}.
+
+For the points where solver does work, it starts with initial values
+\begin{equation}
+    \zeta_0 = \rbulk \frac{\ln^2(z_a/\zm)}{\ln(z_a/z_t)} \times
+    \begin{cases}
+        1, & \rbulk<0\\
+        \left(1-\frac{\rbulk}{\rcrit}\right)^{-1}, & \rbulk \ge 0\\
+    \end{cases}
+\end{equation}
+and then uses Newton method to iteratively find the solution of~\eqref{eq:zeta}. This is another point where $\rcrit$ is used in the solver, even for the stability functions that do not use this parameter.
+
+Whenever $|\zeta|$ becomes smaller than $\zeta_{\min}$ (set to \num{e-6} in \verb|mo_drag_1d|), the situation is considered to be stable and the iterations stop, returning $\zeta=0$ and neutral values of $F_i$.
+
+Iterations also stop when increment $\zeta$ matches criteria $\min(\Delta \zeta, \Delta \zeta/\zeta) < \varepsilon$, or if the number of iteration steps reaches predefined maximum. In the latter case an error flag is returned, but it is ignored by the calling subroutine \verb|mo_drag_1d|. This maximum number of iterations is set at 20 in \verb|mo_drag_1d|, and $\varepsilon$ is also hardcoded to \num{e-4} in the same subroutine.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Free convection limit}
 
@@ -498,6 +527,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m0.1kb0/u_star.pdf}
    }
    \caption[$\ustar$ vs surface temperature, for $\zm=\SI{0.1}{\m}$.]{Dependence of $\ustar$ on surface temperature, for roughness $\zm=\SI{0.1}{\m}$.}
+   \label{fig:small-z0-ustar}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -554,6 +584,7 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
        \includegraphics[width=\panelW]{most-brutsaert/output/z0m2kb0/flux_m.pdf}
    }
    \caption[Surface stress vs surface temperature, for $\zm=\SI{2}{\m}$.]{Dependence of surface stress on surface temperature, for high value of roughness $\zm=\SI{2}{\m}$.}
+   \label{fig:large-z0-ustar}
 \end{figure}
 
 \begin{figure}
