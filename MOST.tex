@@ -218,7 +218,7 @@ In stable case (for $\zeta>0$)
    \fstab_m(\zeta) = \fstab_h(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
 \end{equation}
 
-\subsection{Stable option 2}
+\subsection{Stable option 2}\label{sect:stable2}
 In unstable regime, stability corrections are the same as in stable option 1, equations~\eqref{eq:fms-unstable}. In stable regime
 \begin{equation}
    \fstab_m(\zeta) = \fstab_h(\zeta) = \begin{cases}
@@ -287,7 +287,7 @@ Older models may have used diffrent sets of options. For example, ESM2Mb used st
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Solving for surface fluxes}
 Following \cite{Held2004} note, bulk Richardson number can be calculated from known winds and virtual potential temperatures at the top of the surface boundary layer $z_a$ and the surface as
-\begin{equation}
+\begin{equation}\label{eq:ribulk0}
     \rbulk = z_a\frac{b(z_a)-b(0)}{u(z_a)^2} = g z_a \frac{\theta_v(z_a)-\theta_v(0)}{\theta_v(0)u(z_a)^2}
 \end{equation}
 where
@@ -362,6 +362,26 @@ This is not the expression that the code is using, though. Not sure why, it look
 The only disadvantage that I can see is that it includes $1/\zeta$ term that may cause problems at $\zeta=0$; the equation~\eqref{eq:Fderiv1} does not, although the code uses the form~\eqref{eq:Fderiv2}.
 \end{mdframed}
 
+\subsection{Convergence near $\rcrit$}
+One issue --- also pointed out in \cite{Held2004} --- is the convergence near $\rbulk \approx \rcrit$ for some forms of stability functions. To illustrate the problem, consider the stable option 2 described in section~\ref{sect:stable2}, and assume for simplicity that $\zm=\zh$. For the values of $\zeta > \zeta_t$ the stability correction functions are
+\begin{equation}
+   \fstab_m = \fstab_h = a + b \zeta
+\end{equation}
+where $a=1+(5-b) \zeta_t$ and $b=\rcrit^{-1}$.
+
+Since in our case
+\begin{equation}
+    F_h = F_m
+        = \int \frac{a+b\zeta}{\zeta} d \zeta
+        = a \ln \zeta + b \zeta + C
+\end{equation}
+equation~\eqref{eq:zeta} becomes
+\begin{equation}
+    \rbulk = \frac{\zeta_a}{a \ln (\zeta_a/\zeta_0) + b (\zeta_a -\zeta_0)}
+           = \frac{\zeta_a}{a \ln(z_a/\zm) + b(1-\zm/z_a)\zeta_a}
+\end{equation}
+
+With $a \ln(z_a/\zm) > 0$, the equation above describes a monotonically increasing curve with upper limit $\rcrit (1-\zm/z_a)^{-1}$. Therefore, for values of $\rbulk$ from~\eqref{eq:ribulk0} larger that $\rcrit$ equation~\eqref{eq:zeta} would not converge. \cite{Held2004} notes that the convergence would also be slow in the vicinity of $\rcrit$.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Free convection limit}
 
@@ -813,7 +833,7 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
 Figure~\ref{fig:FRSLm} shows the dependence of momentum integral $\FRSL_m$ on a number of parameters; Figure~\ref{fig:FRSLt} does the same for heat integral $\FRSL_h$.
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-\subsubsection{Practical estimation of integral $R_i$}
+\subsection{Practical estimation of integral $R_i$}
 In the course of the numerical solution of equation~\eqref{eq:zetaRSL}, integrals $R_i$ \eqref{eq:integralR} must be estimated multiple times for every surface flux calculation. That makes the efficiency of this estimation an important factor. Obviously direct integration would likely to be computationally prohibitive. One could imagine tabulating the integral $R_i$ in a look-up table, but it depends on at least four parameters ($z_1$, $z_2$, $L$, and $\zR$) and a reasonably accurate look-up table would be huge.
 
 To facilitate the lookup table approach, $R_i$ can represented as a sum of two terms:
@@ -899,7 +919,7 @@ Figures~\ref{fig:integralIm} and~\ref{fig:integralIh} indicate that the integral
 
 \section{Roughness sublayer influence on fluxes and associated variables}
 
-Figure~\ref{fig:solution1} shows the fluxes calculated with roughness sublayer depending on the surface temperature $T_s$, for
+Figures~\ref{fig:solution1} and~\ref{fig:solution12} show the fluxes calculated with roughness sublayer depending on the surface temperature $T_s$, for specified boundary conditions. It should be emphasized that these plots show the solution of \emph{boundary condition} problem: the atmospheric wind velocity and temperatures of the surface and the atmosphere are prescribed, not emerge as a consistent solution of the energy balance and fluxes.
 
 \begin{figure}
     \centering
@@ -916,7 +936,7 @@ Figure~\ref{fig:solution1} shows the fluxes calculated with roughness sublayer d
     \subfloat[Surface stress, $U_a = \SI{5}{\meter\per\s}$]{
         \includegraphics[width=\panelW]{most-rsl/output/z0m1.0w5.0/flux_m.pdf}
     }
-    \caption[Fluxes vs surface temperature]{Fluxes of heat and momentum for different values of roughness sublayer depth $\zR$ and atmospheric wind speed $U_a$, depending on surface temperature $T_s$. Temperature of the atmosphere was fixed at $T_a = \SI{300}{\K}$; the height of the Monin-Obukhov layer was $z_a = \SI{17.5}{\m}$, roughness length $\zm=\SI{1}{\m}.$}
+    \caption[Fluxes vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{1}{\m}$]{Fluxes of heat and momentum for different values of roughness sublayer depth $\zR$ and atmospheric wind speed $U_a$, depending on surface temperature $T_s$. Temperature of the atmosphere was fixed at $T_a = \SI{300}{\K}$; the height of the Monin-Obukhov layer was $z_a = \SI{17.5}{\m}$, roughness length $\zm=\SI{1}{\m}.$}
     \label{fig:solution1}
 \end{figure}
 
@@ -935,7 +955,7 @@ Figure~\ref{fig:solution1} shows the fluxes calculated with roughness sublayer d
     \subfloat[Surface stress, $U_a = \SI{5}{\meter\per\s}$]{
         \includegraphics[width=\panelW]{most-rsl/output/z0m0.1w5.0/flux_m.pdf}
     }
-    \caption{Same as Figure~\ref{fig:solution1}, but for roughness length $\zm = \SI{0.1}{\m}.$}
+    \caption[Fluxes vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{0.1}{\m}$]{Same as Figure~\ref{fig:solution1}, but for roughness length $\zm = \SI{0.1}{\m}.$}
     \label{fig:solution2}
 \end{figure}
 
