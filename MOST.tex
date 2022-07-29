@@ -370,7 +370,7 @@ The only disadvantage that I can see is that it includes $1/\zeta$ term that may
 \end{mdframed}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-\subsection{Convergence near $\rcrit$}\label{sect:convergence}
+\subsection{Stability functions asymptotic behavior at high $\zeta$ and solution existence}\label{sect:convergence}
 One issue --- also pointed out in \cite{Held2004} --- is the convergence near $\rbulk \approx \rcrit$ for some forms of stability functions. To illustrate the problem, consider the stable option 2 described in section~\ref{sect:stable2}, and assume for simplicity that $\zm=\zh$. For the values of $\zeta > \zeta_t$ the stability correction functions are
 \begin{equation}
    \fstab_m = \fstab_h = a + b \zeta
@@ -389,7 +389,15 @@ equation~\eqref{eq:zeta} becomes
            = \frac{\zeta_a}{a \ln(z_a/\zm) + b(1-\zm/z_a)\zeta_a}
 \end{equation}
 
-With $a \ln(z_a/\zm) > 0$, the equation above describes a monotonically increasing curve with upper limit $\rich_{\max} = \rcrit (1-\zm/z_a)^{-1}$ at $\zeta_a \to \infty$. Therefore, for values of $\rbulk$ from~\eqref{eq:ribulk0} larger that $\rich_{\max}$ equation~\eqref{eq:zeta} would not converge. \cite{Held2004} notes that the convergence would also be slow in the vicinity of $\rcrit$.
+With $a \ln(z_a/\zm) > 0$, the equation above describes a monotonically increasing curve with upper limit $\rich_{\max} = \rcrit (1-\zm/z_a)^{-1}$ at $\zeta_a \to \infty$. Therefore, for values of $\rbulk$ from~\eqref{eq:ribulk0} larger that $\rich_{\max}$ equation~\eqref{eq:zeta} would not converge.
+
+In fact, this means that for certain values of stable vertical temperature gradient in the near-surface air, the solution of equation~\eqref{eq:zeta} with stability functions that are linear with $\zeta$ at high zeta does not exist. For slow wind speeds that threshold is pretty low. From equation~\eqref{eq:ribulk0}, $\rbulk > \rcrit$ if
+\begin{equation}
+    \theta_v(z_a)-\theta_v(0) > \rcrit \frac{u(z_a)^2 \theta_v(0)}{g z_a}
+\end{equation}
+so for wind speed of \SI{1}{\m\per\s}, $z_a = \SI{17.5}{\m}$ and  $\rcrit=1$ that gives \SI{1.75}{\K}. It's hard to believe that such situation is unrealistic in the real world.
+
+\cite{Held2004} notes that the convergence would be slow in the vicinity of $\rcrit$; current model code "works around" this problem by assigning arbitrary small values to the drag coefficients for $\rbulk > 0.95 \times \rcrit$.
 
 \cite{Brutsaert2005} stability correction function has a different asymptotic behavior, stabilizing at constant value as $\zeta \to +\infty$ (equation~\eqref{eq:brutsaert-stable} and Figure~\ref{fig:stability-corrections}); therefore it should not have this convergence issue.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
