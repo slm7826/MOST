@@ -199,6 +199,7 @@ and substituting ${\partial u/\partial z}$ from~\eqref{eq:u-profile}
 \section{Stability functions}
 Current FMS code (2020.04) can use a number of stability correction functions, controlled by options specified in \verb|monin_obukhov_nml|.
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Stable option 1}
 In unstable regime ($\zeta < 0$), the stability functions are defined as
 \begin{subequations}
@@ -218,6 +219,9 @@ In stable case (for $\zeta>0$)
    \fstab_m(\zeta) = \fstab_h(\zeta) = 1 + \left(5 + \frac{\zeta}{\rcrit}\right)\frac{\zeta}{1+\zeta} \\
 \end{equation}
 
+$\rcrit$ is a namelist parameter \verb|rich_crit| in \verb|monin_obukhov_nml|.
+
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Stable option 2}\label{sect:stable2}
 In unstable regime, stability corrections are the same as in stable option 1, equations~\eqref{eq:fms-unstable}. In stable regime
 \begin{equation}
@@ -228,12 +232,14 @@ In unstable regime, stability corrections are the same as in stable option 1, eq
 \end{equation}
 
 Note that in stable case, $\fstab_m(\zeta) = \fstab_h(\zeta)$, like they were in \cite{Held2004}.
+$\zeta_t$ is a namelist parameter \verb|zeta_trans| in \verb|monin_obukhov_nml|.
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Brutsaert}
-Stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code on branch \verb|usr/slm/sfcx|, together with refactoring of the Monin-Obukhov code to make it more easily expandable and manageable.
+Stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code on branch \verb|usr/slm/sfcx|, together with refactoring of the Monin-Obukhov code to make it easier to expand and manage.
 \todo[inline]{the implementation is still incomplete, stable\_mix needs to be implemented yet. It is not very simple because the stable case correction functions are fairly complicated, and finding $\zeta$ for given $\rich$ can be expensive if done numerically.}
 
-For unstable case
+In unstable case
 \begin{subequations}
 \begin{align}
     \fstab_m(\zeta) & = \begin{cases}
@@ -258,7 +264,7 @@ The complicated form of stable case correction $\fstab_x$ is because a relativel
 \begin{equation}
 \Psi_x = -a_s \ln\big[\zeta + (1+\zeta^{b_s})^{1/b_s}\big]
 \end{equation}
-and then then stability corrections $\fstab_x$ were obtained by differentiation.
+and then the stability corrections $\fstab_x$ were obtained by differentiation.
 
 \begin{figure}
    \centering
@@ -276,6 +282,7 @@ and then then stability corrections $\fstab_x$ were obtained by differentiation.
    \label{fig:stability-corrections}
 \end{figure}
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Typical model settings}
 ESM4.1 uses stable option 2 with $\rcrit=1.0$ and $\zeta_t=0.5$; it does not use new Ming's unstable option. Figures~\ref{fig:small-z0-sens} and \ref{fig:large-z0-sens} show typical fluxes resulting from Monin-Obukhov calculations in this case. Note that for the purposes of these calculations gustiness was not added to the atmospheric wind velocity.
 
@@ -806,7 +813,7 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
     \subfloat[same as (e), but on log scale]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_m_vs_zzR_log.pdf}
     }
-    \caption[Intergral with RSL corrections $\FRSL_m$ vs $1/L$ and $\zR$]{Dependence of RSL integral $\FRSL_m$ for typical model settings on $1/L$ and $\zR$. Top of the constant flux layer $z_a$ was assumed to be \SI{17.5}{\m}, roughness length for momentum $z_0 = \SI{1}{\m}$, and for heat $z_{0s}\approx\SI{0.135}{\m}$ ($k/B = 2.0$). Note that as $\zR \to 0$ contribution of RSL becomes small, so $\FRSL \to F$.}
+    \caption[Integral stability function with RSL corrections $\FRSL_m$ vs $1/L$ and $\zR$]{Dependence of RSL integral $\FRSL_m$ for typical model settings on $1/L$ and $\zR$. Top of the constant flux layer $z_a$ was assumed to be \SI{17.5}{\m}, roughness length for momentum $z_0 = \SI{1}{\m}$, and for heat $z_{0s}\approx\SI{0.135}{\m}$ ($k/B = 2.0$). Note that as $\zR \to 0$ contribution of RSL becomes small, so $\FRSL \to F$.}
     \label{fig:FRSLm}
 \end{figure}
 
@@ -832,7 +839,7 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
     \subfloat[same as (e), but on log scale]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_vs_zzR_log.pdf}
     }
-    \caption[Intergral with RSL corrections $\FRSL_h$ vs $1/L$ and $\zR$]{Same as Figure~\ref{fig:FRSLm}, but for heat RSL integral $\FRSL_h$.}
+    \caption[Integral stability function with RSL corrections $\FRSL_h$ vs $1/L$ and $\zR$]{Same as Figure~\ref{fig:FRSLm}, but for heat RSL integral $\FRSL_h$.}
     \label{fig:FRSLt}
 \end{figure}
 
@@ -858,7 +865,7 @@ The first part in the right-hand side of equation~\eqref{eq:gderiv} has exactly 
     \subfloat[ratio $\FRSL_h/F_t$, depending on $z_a/\zR$]{
         \includegraphics[width=\panelW]{most-rsl/output/integral_F/F_t_ratio_vs_zzR.pdf}
     }
-    \caption{Ratio of $\FRSL_m/F_m$ and $\FRSL_h/F_h$, depending on $1/L$ and $\zR$}
+    \caption{Ratio of $\FRSL_m/F_m$ and $\FRSL_h/F_h$, vs $1/L$ and $\zR$}
 \end{figure}
 
 Figure~\ref{fig:FRSLm} shows the dependence of momentum integral $\FRSL_m$ on a number of parameters; Figure~\ref{fig:FRSLt} does the same for heat integral $\FRSL_h$.
@@ -970,7 +977,7 @@ Note the spikes around $T_{sfc} \approx \SI{298.35}{\K}$ in Figure~\ref{fig:solu
     \subfloat[Surface stress, $U_a = \SI{5}{\meter\per\s}$]{
         \includegraphics[width=\panelW]{most-rsl/output/z0m1.0w5.0/flux_m.pdf}
     }
-    \caption[Fluxes vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{1}{\m}$]{Fluxes of heat and momentum for different values of roughness sublayer depth $\zR$ and atmospheric wind speed $U_a$, depending on surface temperature $T_s$. Temperature of the atmosphere was fixed at $T_a = \SI{300}{\K}$; the height of the Monin-Obukhov layer was $z_a = \SI{17.5}{\m}$, roughness length $\zm=\SI{1}{\m}.$}
+    \caption[Fluxes with RSL, vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{1}{\m}$]{Fluxes of heat and momentum for different values of roughness sublayer depth $\zR$ and atmospheric wind speed $U_a$, depending on surface temperature $T_s$. Temperature of the atmosphere was fixed at $T_a = \SI{300}{\K}$; the height of the Monin-Obukhov layer was $z_a = \SI{17.5}{\m}$, roughness length $\zm=\SI{1}{\m}.$}
     \label{fig:solution1}
 \end{figure}
 
@@ -989,7 +996,7 @@ Note the spikes around $T_{sfc} \approx \SI{298.35}{\K}$ in Figure~\ref{fig:solu
     \subfloat[Surface stress, $U_a = \SI{5}{\meter\per\s}$]{
         \includegraphics[width=\panelW]{most-rsl/output/z0m0.1w5.0/flux_m.pdf}
     }
-    \caption[Fluxes vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{0.1}{\m}$]{Same as Figure~\ref{fig:solution1}, but for roughness length $\zm = \SI{0.1}{\m}$. The spike around $T_{sfc} \approx \SI{298.35}{\K}$ are because the solution of equation~\eqref{eq:zetaRSL} did not converge.}
+    \caption[Fluxes with RSL, vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{0.1}{\m}$]{Same as Figure~\ref{fig:solution1}, but for roughness length $\zm = \SI{0.1}{\m}$. The spike around $T_{sfc} \approx \SI{298.35}{\K}$ are because the solution of equation~\eqref{eq:zetaRSL} did not converge.}
     \label{fig:solution2}
 \end{figure}
 
