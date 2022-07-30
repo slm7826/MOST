@@ -223,9 +223,11 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
   real, dimension(n) ::   &
        d_rich, rich_1, correction, corr, z_z0, z_zt, z_zq, &
        ln_z_z0, ln_z_zt, ln_z_zq,                          &
-       rzeta, df_m, df_t, df_q
-
+       phi_m, phi_m_0, phi_t, phi_t_0, rzeta,              &
+       zeta_0, zeta_t, zeta_q, df_m, df_t, l_inv
   logical, dimension(n) :: mask_1, mask_n
+
+!   integer :: i
 
   ier = 0
 
@@ -253,20 +255,54 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
      ! handle points in neutral or near-neutral condition. Note that with RSL the profile
      ! is only logarithmic where zR == 0
      mask_n = mask_1 .and. (abs(zeta)<zeta_min)
-     where (mask_n) zeta = 0.0
-     call most%integral_m_with_rsl(n, mask_n, zeta, z0, z, zR, ln_z_z0, f_m, df_m, ier)
-     call most%integral_t_with_rsl(n, mask_n, zeta, zt, z, zR, ln_z_zt, f_t, df_t, ier)
-     call most%integral_q_with_rsl(n, mask_n, zeta, zq, z, zR, ln_z_zq, f_q, df_q, ier)
+
+     where (mask_n)
+        zeta = 0.0
+        f_m = ln_z_z0
+        f_t = ln_z_zt
+        f_q = ln_z_zq
+     end where
+     ! add roughness sublayer corrections
+     where (mask_n) l_inv = zeta/z
+     call most%add_rsl_integral_m(n, mask_n, l_inv, z0, z, zR, f_m, ierr=ier)
+     call most%add_rsl_integral_t(n, mask_n, l_inv, zt, z, zR, f_t, ierr=ier)
+     call most%add_rsl_integral_q(n, mask_n, l_inv, zq, z, zR, f_q, ierr=ier)
      ! do not do any more calculations at these points
      where (mask_n) mask_1 = .false.
 
-     ! handle points in non-neutral conditions
-     call most%integral_m_with_rsl(n, mask_1, zeta, z0, z, zR, ln_z_z0, f_m, df_m, ier)
-     call most%integral_t_with_rsl(n, mask_1, zeta, zt, z, zR, ln_z_zt, f_t, df_t, ier)
-     call most%integral_q_with_rsl(n, mask_1, zeta, zq, z, zR, ln_z_zq, f_q, df_q, ier)
-
+     zeta_0 = 0.0
+     zeta_t = 0.0
+     zeta_q = 0.0
      where (mask_1)
         rzeta  = 1.0/zeta
+        zeta_0 = zeta/z_z0
+        zeta_t = zeta/z_zt
+        zeta_q = zeta/z_zq
+     end where
+
+     call most%derivative_m(n, mask_1, zeta,   phi_m,   ier)
+     call most%derivative_m(n, mask_1, zeta_0, phi_m_0, ier)
+     call most%derivative_t(n, mask_1, zeta,   phi_t  , ier)
+     call most%derivative_t(n, mask_1, zeta_t, phi_t_0, ier)
+
+     where (mask_1)
+        df_m  = (phi_m - phi_m_0)*rzeta
+        df_t  = (phi_t - phi_t_0)*rzeta
+     endwhere
+
+     call most%integral_m(n, mask_1, zeta, zeta_0, ln_z_z0, f_m, ier)
+     call most%integral_t(n, mask_1, zeta, zeta_t, ln_z_zt, f_t, ier)
+     call most%integral_q(n, mask_1, zeta, zeta_q, ln_z_zq, f_q, ier)
+
+     ! add roughness sublaye corrections
+     where (mask_1) l_inv = zeta/z
+     call most%add_rsl_integral_m(n, mask_1, l_inv, z0, z, zR, f_m, df_m, ierr=ier)
+     call most%add_rsl_integral_t(n, mask_1, l_inv, zt, z, zR, f_t, df_t, ierr=ier)
+     ! we need the value of f_q to return to the calling subroutine, but it is not used
+     ! in the solver
+     call most%add_rsl_integral_q(n, mask_1, l_inv, zq, z, zR, f_q,       ierr=ier)
+
+     where (mask_1)
         rich_1 = zeta*f_t/(f_m*f_m)
         d_rich = rich_1*( rzeta +  df_t/f_t - 2.0 *df_m/f_m)
         correction = (rich - rich_1)/d_rich

@@ -51,8 +51,8 @@ program test
   class(rsl_functions_T),  pointer :: rsl
 
   character(512) :: msg
-  real :: F_m(n), FF_m(n), dFF_m(n)
-  real :: F_t(n), FF_t(n), dFF_t(n)
+  real :: F_m(n), FF_m(n)
+  real :: F_t(n), FF_t(n)
   integer :: ierr
   ! inputs
   real  :: x
@@ -144,8 +144,10 @@ program test
      call most%integral_m(n, mask, zeta_a, zeta0m, ln_z_z0, F_m, ierr)
      call most%integral_t(n, mask, zeta_a, zeta0s, ln_z_zs, F_t, ierr)
 
-     call most%integral_m_with_rsl(n,mask,zeta_a,z0m,z_a,z_R,ln_z_z0, FF_m, dFF_m, ierr)
-     call most%integral_t_with_rsl(n,mask,zeta_a,z0s,z_a,z_R,ln_z_zs, FF_t, dFF_t, ierr)
+     FF_m = F_m
+     FF_t = F_t
+     call most%add_rsl_integral_m(n, mask, L_inv, z0m, z_a, z_R, FF_m, ierr=ierr)
+     call most%add_rsl_integral_t(n, mask, L_inv, z0s, z_a, z_R, FF_t, ierr=ierr)
 
      write(*,'(99(g14.5,:,","))') &
          z_a, z0m, z0s, z_R, L_inv, z_a*L_inv, z_a*zR_inv, z_R/z_a,&

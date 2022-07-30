@@ -1,7 +1,5 @@
 module monin_obukhov_functions_mod
 
-use, intrinsic :: ieee_arithmetic
-
 use integrate_mod, only : integrate_romberg_trapezoid, integrate_romberg_midpoint, integrate_romberg_midpoint_inv
 use rsl_functions_mod, only : rsl_functions_T
 
@@ -30,12 +28,12 @@ contains
 
   procedure(most_stable_mix),          deferred :: stable_mix
 
-  ! roughness-sublayer related functions
+  ! procedures related to roughness sublayer (RSL)
   procedure :: set_rsl_functions   ! assign RSL functions and possibly do preliminary calculations (e.g. tabulate additive part of RSL integrals)
-  procedure :: integral_m_with_rsl ! integral stability + RSL correction for momentum
-  procedure :: integral_t_with_rsl ! integral stability + RSL correction for heat
-  procedure :: integral_q_with_rsl => integral_t_with_rsl ! integral stability + RSL correction for tracers
-                                   ! currently the same as for heat
+  procedure :: add_rsl_integral_m => add_rsl_integral_m ! add RSL integral stability term -- and optionally its derivative -- for momentum
+  procedure :: add_rsl_integral_t => add_rsl_integral_t ! add RSL integral stability term -- and optionally its derivative -- for heat
+  procedure :: add_rsl_integral_q => add_rsl_integral_t ! add RSL integral stability term -- and optionally its derivative -- for tracers
+                            ! currently the tracer term is the same as for heat
 end type most_functions_T
 
 abstract interface
@@ -119,7 +117,8 @@ real, parameter :: &
 
 contains ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-! --------------------------------------------------------------------------------------
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+! set up rougness sublayer parameterization
 subroutine set_rsl_functions(this,rsl)
   class(most_functions_T), intent(inout) :: this
   class(rsl_functions_T),  pointer       :: rsl
@@ -127,155 +126,144 @@ subroutine set_rsl_functions(this,rsl)
 end subroutine set_rsl_functions
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-! calculate the value of integral stability function for momentum for given parameters
-pure subroutine integral_m_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
+! add the value of integral stability function roughness sublayer correction for momentum
+pure subroutine add_rsl_integral_m(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
    class(most_functions_T), intent(in) :: this
-! the arguments are weird, because we try to preserve bitwise compatibility with
-! original code, and therefore avoid changing order of operations
    integer, intent(in)    :: n          ! size of the input/output arrays
-   logical, intent(in)    :: mask(n)    ! don't do calculations where mask is FALSE
-   real,    intent(in)    :: zeta(n)    ! z_a/L, ratio of MO layer height to MO length scale
-   real,    intent(in)    :: z0(n)      ! roughness length, m
-   real,    intent(in)    :: z_a(n)     ! MO layer height, m
-   real,    intent(in)    :: z_RSL(n)   ! roughness layer length scale, m
-   real,    intent(in)    :: ln_z_z0(n) ! log(z_a/z0m)
-   real,    intent(inout) :: f(n)       ! value of the integral function
-   real,    intent(inout) :: df(n)      ! derivative of the integral function w.r.t. zeta
-   integer, intent(out)   :: ierr       ! error code
+   logical, intent(in)    :: mask(n)    ! don't do calculations where this mask is FALSE
+   real,    intent(in)    :: l_inv(n)   ! 1/L, reciprocal of Monin-Obukhov length
+   real,    intent(in)    :: z1(n)      ! lower limit of the RSL integral, m
+   real,    intent(in)    :: z2(n)      ! upper limit of the RSL integral, m
+   real,    intent(in)    :: zR(n)      ! roughness sublayer length scale, m
+   ! the following inout arguments are updated (incremented) by this subroutine
+   real,    intent(inout), optional :: F (n) ! value of the integral function
+   real,    intent(inout), optional :: df(n) ! derivative of the integral function w.r.t. zeta
+                                        ! where zeta is assumed to be z2/L
+   integer, intent(out),   optional :: ierr  ! error code
 
-   real, parameter :: d_zeta = 0.01 ! small increment of zeta for derivative calculation
+   real, parameter :: delta_l_inv = 0.01 ! small increment of 1/L for derivative calculation
 
    integer :: i
-   real :: R  ! value of RSL integral for given parameters
+   real :: R0 ! value of RSL integral for given parameters
    real :: R1 ! value of RSL integral with small zeta increment, for derivative calculations
-   real :: phi(n), phi_0(n) ! values of differential stability corrections
-   real :: zeta_0(n) ! z0/L
 
-   ! calculate the value of the integral
-   zeta_0 = zeta*z0/z_a
-   call this%integral_m(n, mask, zeta, zeta_0, ln_z_z0, F, ierr)
-   ! calculate the derivative w.r.t. zeta
-   ! derivative of MO stability correction can be calculated analytically
-   call this%derivative_m(n,mask, zeta,   phi,   ierr)
-   call this%derivative_m(n,mask, zeta_0, phi_0, ierr)
-   where (mask) &
-      df = (phi - phi_0)/zeta
-
-   if (.not.associated(this%rsl)) return ! don't do anything else if no RSL
+   if (.not.associated(this%rsl)) return ! don't do anything if ther is no RSL
 
    do i = 1, n
       if (.not.mask(i))    cycle ! skip maske-out points
-      if (.not.z_RSL(i)>0) cycle ! skip points without roughness sublayer
-      call integralR_m_rsl(this, z0(i),z_a(i),z_RSL(i), zeta(i), R, ierr)
-      F(i) = F(i) - R
-!       write(*,*)i,F(i),R
-      ! derivative of RSL correction w.r.t has to be calculated numerically
-      call integralR_m_rsl(this, z0(i),z_a(i),z_RSL(i), zeta(i)+d_zeta, R1, ierr)
-      dF(i) = dF(i) - (R1-R)/d_zeta
-   enddo
-end subroutine integral_m_with_rsl
+      if (.not.zR(i)>0) cycle ! skip points without roughness sublayer
 
-pure subroutine integralR_m_rsl(most,z0,za,z_rsl,zeta, s, ierr)
+      call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i), R0, ierr)
+      if (present(F)) F(i) = F(i) - R0
+      ! derivative of RSL correction w.r.t has to be calculated numerically
+      if (present(df)) then
+         call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i)+delta_l_inv, R1, ierr)
+         dF(i) = dF(i) - (R1-R0)/(delta_l_inv*z2(i))
+      endif
+   enddo
+end subroutine add_rsl_integral_m
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+! add the value of integral stability function roughness sublayer correction for heat
+pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
+   class(most_functions_T), intent(in) :: this
+   integer, intent(in)    :: n          ! size of the input/output arrays
+   logical, intent(in)    :: mask(n)    ! don't do calculations where this mask is FALSE
+   real,    intent(in)    :: l_inv(n)   ! 1/L, reciprocal of Monin-Obukhov length
+   real,    intent(in)    :: z1(n)      ! lower limit of the RSL integral, m
+   real,    intent(in)    :: z2(n)      ! upper limit of the RSL integral, m
+   real,    intent(in)    :: zR(n)      ! roughness sublayer length scale, m
+   ! the following inout arguments are updated (incremented) by this subroutine
+   real,    intent(inout), optional :: F (n) ! value of the integral function
+   real,    intent(inout), optional :: df(n) ! derivative of the integral function w.r.t. zeta
+                                        ! where zeta is assumed to be z2/L
+   integer, intent(out),   optional :: ierr  ! error code
+
+   real, parameter :: delta_l_inv = 0.01 ! small increment of 1/L for derivative calculation
+
+   integer :: i
+   real :: R0 ! value of RSL integral for given parameters
+   real :: R1 ! value of RSL integral with small zeta increment, for derivative calculations
+
+   if (.not.associated(this%rsl)) return ! don't do anything if ther is no RSL
+
+   do i = 1, n
+      if (.not.mask(i))    cycle ! skip maske-out points
+      if (.not.zR(i)>0) cycle ! skip points without roughness sublayer
+
+      call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i), R0, ierr)
+      if (present(F)) F(i) = F(i) - R0
+      ! derivative of RSL correction w.r.t has to be calculated numerically
+      if (present(df)) then
+         call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i)+delta_l_inv, R1, ierr)
+         dF(i) = dF(i) - (R1-R0)/(delta_l_inv*z2(i))
+      endif
+   enddo
+end subroutine add_rsl_integral_t
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pure subroutine integralR_m_rsl(most, z1, z2, z_rsl, l_inv, s, ierr)
   class(most_functions_T), intent(in) :: most
-  real, intent(in)     :: z0, za, z_rsl, zeta
-  real, intent(out)    :: s
-  integer, intent(out) :: ierr
+  real,    intent(in)  :: z1, z2 ! lower and upper limits of the integral, m
+  real,    intent(in)  :: z_rsl  ! roughness sublayer length scale, m
+  real,    intent(in)  :: l_inv  ! reciprocal of Monin-Obukhov length, 1/m
+  real,    intent(out) :: s      ! value of the integral
+  integer, intent(out) :: ierr   ! error code
 
 !   call integrate_romberg_trapezoid(f1 ,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
-  call integrate_romberg_midpoint(f1,z0,za,RSL_RTOL,s,ierr)
+  call integrate_romberg_midpoint(f1,z1,z2,RSL_RTOL,s,ierr)
 
 contains
   ! internal function that returns the integrand
   pure real function f1(x)
      real, intent(in) :: x
 
-     logical :: mask(1)
-     real    :: zeta1(1),phi(1)
+     logical :: mask_1(1)
+     real    :: phi_1(1), l_inv_1(1)
      real    :: rsl
      integer :: ierr_ignored
 
-     mask  = .TRUE.
-     zeta1 = zeta
-     call most%derivative_m(1,mask,x*zeta1/za,phi,ierr_ignored)
+     ! calculate stability correction function
+     mask_1  = .TRUE.; l_inv_1 = l_inv
+     call most%derivative_m(1,mask_1,x*l_inv_1,phi_1,ierr_ignored)
+     ! calculate roughness sublayer correction function
      rsl = most%rsl%rsl_m(x/z_rsl)
-     f1 = phi(1)*(1-rsl)/x
+     ! finally, function under the integral
+     f1 = phi_1(1)*(1-rsl)/x
   end function f1
 end subroutine integralR_m_rsl
 
-pure subroutine integralR_t_rsl(most,z0,za,z_rsl,zeta, s, ierr)
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pure subroutine integralR_t_rsl(most,z1, z2, z_rsl, l_inv, s, ierr)
   class(most_functions_T), intent(in) :: most
-  real, intent(in) :: z0, za, z_rsl, zeta
-  real, intent(out) :: s
-  integer, intent(out) :: ierr
+  real,    intent(in)  :: z1, z2 ! lower and upper limits of the integral, m
+  real,    intent(in)  :: z_rsl  ! roughness sublayer length scale, m
+  real,    intent(in)  :: l_inv  ! reciprocal of Monin-Obukhov length, 1/m
+  real,    intent(out) :: s      ! value of the integral
+  integer, intent(out) :: ierr   ! error code
 
 !   call integrate_romberg_trapezoid(f1 ,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
-  call integrate_romberg_midpoint(f1,z0,za,RSL_RTOL,s,ierr)
+  call integrate_romberg_midpoint(f1,z1,z2,RSL_RTOL,s,ierr)
 
 contains
   ! internal function that returns the integrand
   pure real function f1(x)
      real, intent(in) :: x
 
-     logical :: mask(1)
-     real    :: zeta1(1),phi(1)
+     logical :: mask_1(1)
+     real    :: phi_1(1), l_inv_1(1)
      real    :: rsl
      integer :: ierr_ignored
 
-     mask  = .TRUE.
-     zeta1 = zeta
-     call most%derivative_t(1,mask,x*zeta1/za,phi,ierr_ignored)
+     ! calculate stability correction function
+     mask_1  = .TRUE.; l_inv_1 = l_inv
+     call most%derivative_t(1,mask_1,x*l_inv_1,phi_1,ierr_ignored)
+     ! calculate roughness sublayer correction function
      rsl = most%rsl%rsl_t(x/z_rsl)
-     f1 = phi(1)*(1-rsl)/x
+     ! finally, function under the integral
+     f1 = phi_1(1)*(1-rsl)/x
   end function f1
 end subroutine integralR_t_rsl
-
-! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-! calculate the value of integral stability function for momentum for given parameters
-pure subroutine integral_t_with_rsl(this, n, mask, zeta, z0, z_a, z_RSL, ln_z_z0, f, df, ierr)
-   class(most_functions_T), intent(in) :: this
-! the arguments are weird, because we try to preserve bitwise compatibility with
-! original code, and therefore avoid changing order of operations
-   integer, intent(in)    :: n          ! size of the input/output arrays
-   logical, intent(in)    :: mask(n)    ! don't do calculations where mask is FALSE
-   real,    intent(in)    :: zeta(n)    ! z_a/L, ratio of MO layer height to MO length scale
-   real,    intent(in)    :: z0(n)      ! roughness length, m
-   real,    intent(in)    :: z_a(n)     ! MO layer height, m
-   real,    intent(in)    :: z_RSL(n)   ! roughness layer length scale, m
-   real,    intent(in)    :: ln_z_z0(n) ! log(z_a/z0m)
-   real,    intent(inout) :: f(n)       ! value of the integral function
-   real,    intent(inout) :: df(n)      ! derivative of the integral function w.r.t. zeta
-   integer, intent(out)   :: ierr       ! error code
-
-   real, parameter :: d_zeta = 0.01 ! small increment of zeta for derivative calculation
-
-   integer :: i
-   real :: R  ! value of RSL integral for given parameters
-   real :: R1 ! value of RSL integral with small zeta increment, for derivative calculations
-   real :: phi(n), phi_0(n) ! values of differential stability corrections
-   real :: zeta_0(n) ! z0/L
-
-   ! calculate the value of the integral
-   zeta_0 = zeta*z0/z_a
-   call this%integral_t(n, mask, zeta, zeta_0, ln_z_z0, F, ierr)
-   ! calculate the derivative w.r.t. zeta
-   ! derivative of MO stability correction can be calculated analytically
-   call this%derivative_t(n,mask, zeta,   phi,   ierr)
-   call this%derivative_t(n,mask, zeta_0, phi_0, ierr)
-   where (mask) &
-      df = (phi - phi_0)/zeta
-
-   if (.not.associated(this%rsl)) return ! don't do anything else if no RSL
-
-   do i = 1, n
-      if (.not.mask(i)) cycle
-      if (.not.(z_RSL(i)>0)) cycle ! skip points without roughness sublayer
-      call integralR_t_rsl(this, z0(i),z_a(i),z_RSL(i), zeta(i), R, ierr)
-      F(i) = F(i) - R
-      ! derivative of RSL correction w.r.t has to be calculated numerically
-      call integralR_t_rsl(this, z0(i),z_a(i),z_RSL(i), zeta(i)+d_zeta, R1, ierr)
-      dF(i) = dF(i) - (R1-R)/d_zeta
-   enddo
-end subroutine integral_t_with_rsl
 
 ! ==== neutral stability option =========================================================
 function make_neutral_functions(rich_crit) result(ptr)
