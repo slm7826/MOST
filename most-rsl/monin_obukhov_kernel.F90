@@ -218,7 +218,6 @@ pure subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small,
 
   real    :: max_cor
   integer :: iter
-!   integer :: i
 
   real, dimension(n) ::   &
        d_rich, rich_1, correction, corr, z_z0, z_zt, z_zq, &
@@ -335,7 +334,7 @@ end subroutine monin_obukhov_solve_zeta
 
 pure subroutine monin_obukhov_profile_1d(most, &
      vonkarm, &
-     & n, zref, zref_t, z, z0, zt, zq, u_star, b_star, q_star, &
+     & n, zref, zref_t, z, z0, zt, zq, zR, u_star, b_star, q_star, &
      & del_m, del_t, del_q, ier, avail)
 
   class(most_functions_T), intent(in) :: most
@@ -343,6 +342,7 @@ pure subroutine monin_obukhov_profile_1d(most, &
   integer, intent(in   )                :: n
   real,    intent(in   )                :: zref, zref_t
   real,    intent(in   ), dimension(n)  :: z, z0, zt, zq, u_star, b_star, q_star
+  real,    intent(in   ), dimension(n)  :: zR ! roughness sublayer length scale
   real,    intent(  out), dimension(n)  :: del_m, del_t, del_q
   integer, intent(out  )                :: ier
   logical, intent(in   ), dimension(n), optional :: avail ! provided mask
@@ -350,7 +350,7 @@ pure subroutine monin_obukhov_profile_1d(most, &
   real, dimension(n) :: zeta, zeta_0, zeta_t, zeta_q, zeta_ref, zeta_ref_t, &
        ln_z_z0, ln_z_zt, ln_z_zq, ln_z_zref, ln_z_zref_t,  &
        f_m_ref, f_m, f_t_ref, f_t, f_q_ref, f_q,           &
-       mo_length_inv
+       mo_length_inv, zref_n
 
   logical, dimension(n) :: mask
 
@@ -394,14 +394,26 @@ pure subroutine monin_obukhov_profile_1d(most, &
         zeta_ref_t = zref_t*mo_length_inv
      endwhere
 
-     call most%integral_m(n, mask, zeta, zeta_0,   ln_z_z0,   f_m,     ier)
-     call most%integral_m(n, mask, zeta, zeta_ref, ln_z_zref, f_m_ref, ier)
+     call most%integral_m(n, mask, zeta, zeta_0,     ln_z_z0,     f_m,     ier)
+     call most%integral_m(n, mask, zeta, zeta_ref,   ln_z_zref,   f_m_ref, ier)
 
      call most%integral_t(n, mask, zeta, zeta_t,     ln_z_zt,     f_t,     ier)
      call most%integral_t(n, mask, zeta, zeta_ref_t, ln_z_zref_t, f_t_ref, ier)
 
      call most%integral_q(n, mask, zeta, zeta_q,     ln_z_zq,     f_q,     ier)
      call most%integral_q(n, mask, zeta, zeta_ref_t, ln_z_zref_t, f_q_ref, ier)
+
+     ! add roughness sublayer corrections
+     zref_n(:) = zref
+     call most%add_rsl_integral_m(n, mask, mo_length_inv, z0,     z, zR, f_m,     ierr=ier)
+     call most%add_rsl_integral_m(n, mask, mo_length_inv, zref_n, z, zR, f_m_ref, ierr=ier)
+
+     zref_n(:) = zref_t
+     call most%add_rsl_integral_t(n, mask, mo_length_inv, zt,     z, zR, f_t,     ierr=ier)
+     call most%add_rsl_integral_t(n, mask, mo_length_inv, zref_n, z, zR, f_t_ref, ierr=ier)
+
+     call most%add_rsl_integral_q(n, mask, mo_length_inv, zq,     z, zR, f_q,     ierr=ier)
+     call most%add_rsl_integral_q(n, mask, mo_length_inv, zref_n, z, zR, f_q_ref, ierr=ier)
 
      where(mask)
         del_m = 1.0 - f_m_ref/f_m

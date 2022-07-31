@@ -57,6 +57,9 @@ rightline=false
 \newlength{\panelW}
 \setlength{\panelW}{7.8cm}
 
+\newlength{\panelS}
+\setlength{\panelS}{4cm}
+
 \captionsetup[subfigure]{position=top,textfont=scriptsize,labelfont=scriptsize,singlelinecheck=false,captionskip=0pt,farskip=2pt,margin=15pt}
 
 \title{Exploration of Monin-Obukhov Similarity Theory and its implementation in GFDL models}
@@ -967,7 +970,8 @@ Figures~\ref{fig:integralIm} and~\ref{fig:integralIh} indicate that the integral
 
 Figures~\ref{fig:solution1} and~\ref{fig:solution2} show the fluxes calculated with roughness sublayer depending on the surface temperature $T_s$, for specified boundary conditions. It should be emphasized that these plots show the solution of \emph{boundary condition} problem: the atmospheric wind velocity and temperatures of the surface and the atmosphere are prescribed, not emerge as a consistent solution of the energy balance and fluxes.
 
-Note the spikes around $T_{sfc} \approx \SI{298.35}{\K}$ in Figure~\ref{fig:solution2}: the solution of equation for $\rbulk$ with RSL correction~\eqref{eq:zetaRSL} did not converge for these combination of parameters, resulting in crazy unrealistic values of the fluxes. Diving into debug shows that it is likely due to the problem around $\rcrit$ discussed in Section~\ref{sect:convergence}, except exacerbated by the RSL factor.
+%Note the spikes around $T_{sfc} \approx \SI{298.35}{\K}$ in Figure~\ref{fig:solution2}:
+Note that the solution of equation for $\rbulk$ with RSL correction~\eqref{eq:zetaRSL} did not converge for $T_{sfc} \approx \SI{298.35}{\K}$, $U_a=\SI{1}{\m\per\s}$, and $\zR = \SI{5}{\m}$. Diving into debug shows that it is likely due to the problem around $\rcrit$ discussed in Section~\ref{sect:convergence}, except exacerbated by the RSL factor.
 \todo[inline]{Not clear what to do with it. I don't want to change the hardcoded parameters in the existing MO code, e.g. the 0.95 factor that --- in my understanding --- is introduced specifically to avoid this problem. One possible solution is to impose upper limit on $\zeta$, and hope that such limit is never triggered by in the solution without RSL.}
 
 \begin{figure}
@@ -1006,6 +1010,72 @@ Note the spikes around $T_{sfc} \approx \SI{298.35}{\K}$ in Figure~\ref{fig:solu
     }
     \caption[Fluxes with RSL, vs surface temperature, $\zR$, and $U_a$ for $\zm=\SI{0.1}{\m}$]{Same as Figure~\ref{fig:solution1}, but for roughness length $\zm = \SI{0.1}{\m}$. The spike around $T_{sfc} \approx \SI{298.35}{\K}$ are because the solution of equation~\eqref{eq:zetaRSL} did not converge.}
     \label{fig:solution2}
+\end{figure}
+
+Figure~\ref{fig:profile-unstable} shows vertical profile of wind and temperature for unstable conditions, while Figure~\ref{fig:profile-stable} -- for stable conditions.
+Note that in each case $\zeta$ was obtained as a result of solution, so it has different values for each curve.
+Temperature does not reach the same value at the bottom the lower limit of interpolation was set at $\zm$, which is higher than $\zh$ with adopted value $k B^{-1} = 2$.
+
+\begin{figure}
+    \centering
+    \subfloat[$T$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m0.1w1.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m1.0w1.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m0.1w5.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m1.0w5.0/t.pdf}
+    }
+
+    \subfloat[$u$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m0.1w1.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m1.0w1.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m0.1w5.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/unstable/z0m1.0w5.0/u.pdf}
+    }
+    \caption[Temperature and wind profiles for unstable conditions]{Vertical profiles of temperature and wind for unstable conditions}
+    \label{fig:profile-unstable}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \subfloat[$T$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m0.1w1.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m1.0w1.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m0.1w5.0/t.pdf}
+    }
+    \subfloat[$T$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m1.0w5.0/t.pdf}
+    }
+
+    \subfloat[$u$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m0.1w1.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{1}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m1.0w1.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{0.1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m0.1w5.0/u.pdf}
+    }
+    \subfloat[$u$, $U_a = \SI{5}{\meter\per\s}$, $\zm=\SI{1}{\m}$]{
+        \includegraphics[width=\panelS]{most-rsl/output/profile/stable/z0m1.0w5.0/u.pdf}
+    }
+    \caption[Temperature and wind profiles for stable conditions]{Vertical profiles of temperature and wind for stable conditions}
+    \label{fig:profile-stable}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
