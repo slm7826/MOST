@@ -11,7 +11,7 @@ popd
 
 for z0m in 1.0 0.1; do
     for wind in 1.0 5.0; do
-        outdir=output/z0m${z0m}w${wind}; tmpdir=$outdir/tmp
+        outdir=output/fluxes/z0m${z0m}w${wind}; tmpdir=$outdir/tmp
 
         echo "Calculating ${outdir}..."
         mkdir -p $outdir $tmpdir; rm -f $tmpdir/*.csv
