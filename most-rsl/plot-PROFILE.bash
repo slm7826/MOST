@@ -44,7 +44,7 @@ EOF
         echo "Plotting ${outdir}..."
         for var in t u
         do
-            commonFlags="--width=5 --aspect=1.2 --x=$var --y=z --ylim=0:17.5 --label=zR,zeta,flux_t"
+            commonFlags="--width=4.5 --aspect=1.3 --x=$var --y=z --ylim=0:17.5 --label=zR,zeta,flux_t"
             $tooldir/plot.py $commonFlags --save "$outdir/$var.pdf" $tmpdir/*.csv
         done
     done
@@ -85,7 +85,7 @@ EOF
         echo "Plotting ${outdir}..."
         for var in t u
         do
-            commonFlags="--width=5 --aspect=1.2 --x=$var --y=z --ylim=0:17.5 --label=zR,zeta,flux_t"
+            commonFlags="--width=4.5 --aspect=1.3 --x=$var --y=z --ylim=0:17.5 --label=zR,zeta,flux_t"
             $tooldir/plot.py $commonFlags --save "$outdir/$var.pdf" $tmpdir/*.csv
         done
     done
