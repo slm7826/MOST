@@ -15,7 +15,8 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subfig}
-%\usepackage{endfloat} % uncomment to push figures and tables to the end of the document
+
+\usepackage[nomarkers,nofiglist,fighead]{endfloat} % uncomment to push figures and tables to the end of the document
 
 \usepackage{booktabs}
 \usepackage[notcite,notref]{showkeys}
@@ -724,7 +725,12 @@ Ghannam (2022) proposes somewhat different formulation:
 \begin{equation}\label{eq:Ghannam2022}
     \frsl_i(z/\zR) = 1-\mu_1 \exp\left(-\mu_i\frac{z}{\zR}\right)
 \end{equation}
-with $\mu_1 = 0.67$, $\mu_m = 2$, and $mu_t = 1$; he also defines $\zR$ in terms of vegetation properties.
+with $\mu_1 = 0.67$, $\mu_m = 2$, and $\mu_h = 1$; he also defines $\zR$ in terms of vegetation properties as
+\begin{equation}
+    \zR = 3h - 2d
+\end{equation}
+where $h$ is the height of vegetation and $d$ -- displacement height.
+Note that for $d \approx 0.67 h$ the RSL scale is $\zR \approx 1.66 h$, which can reach pretty high values in the regions of tall vegetation.
 
 That is, since $\frsl_i < 1$, for the same $\ustar$ and $\tstar$ roughness sublayer correction reduces the vertical gradients, meaning that it increases turbulent diffusion coefficients. The effect is obviously stronger for smaller $z$.
 
@@ -902,7 +908,9 @@ To make estimation of $I_i$ more convenient, we can make a substitution $z' = z/
         \int_{z_1/\zR}^\infty \fstab_i\left(\frac{\zR}{L}z'\right)\left[1-\frsl_i(z')\right]\frac{dz'}{z'}
     \label{eq:integralI}
 \end{equation}
-Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_2$ can be expressed in terms of that variable if necessary. Figure~\ref{fig:integralIm} shows the integral $I_m$ --- with typical AM4/ESM4 $\fstab_m$ and Ghannam (2002) $\frsl_m$ --- as a function of $1/L$, $\zR/z_a$, and $z_a/\zR$ for some ranges of parameters. \todo[inline]{Calculations of $I_i$ vs $1/L$ take much longer for $\zR = \SI{1}{\m}$ (\SI{48}{\s} vs $<\SI{1}{s}$). It is not clear why: perhaps function is too sharp around zero? or relative precision canot be achieved, becase function values are too small?}
+
+Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_i$ can be expressed in terms of that variable if necessary. Figure~\ref{fig:integralIm} shows the integral $I_m$ --- with typical AM4/ESM4 $\fstab_m$ and Ghannam (2002) $\frsl_m$ --- as a function of $1/L$, $\zR/z_a$, and $z_a/\zR$ for some ranges of parameters.
+\todo[inline]{Calculations of $I_i$ vs $1/L$ take much longer for $\zR = \SI{1}{\m}$ (\SI{48}{\s} vs $<\SI{1}{s}$). It is not clear why: perhaps function is too sharp around zero? or relative precision canot be achieved, becase function values are too small?}
 
 \begin{figure}
   \centering
@@ -962,7 +970,7 @@ layer $z_a$ was assumed to be \SI{17.5}{\m}.}
 
 Parameter $z_1/\zR$ is always positive; $\zR/L$ can be either positive or negative, depending on sign of $L$.
 
-When $z_1$ is close to zero, the function under the integral is not guaranteed to remain finite. Moreover, it may be proportional to $1/z$, which is easy to demonstrate in neutral case: $\fstab_i$ is 1, and $1-\frsl_i$ is also close to 1 when $z \to 0$. That means that when $z_1 \to 0$ the $I_{2,i} \to \infty$.
+When $z_1$ is close to zero, the function under the integral is not guaranteed to remain finite. Moreover, it may be proportional to $1/z$, which is easy to demonstrate in neutral case: $\fstab_i$ is 1, and $1-\frsl_i$ is also close to 1 when $z \to 0$. That means that when $z_1 \to 0$ the $I_i \to \infty$.
 
 Figures~\ref{fig:integralIm} and~\ref{fig:integralIh} indicate that the integrals $I_i$ are fairly well-behaved along the $\zR/z_a$ axis, but they have very steep derivatives with respect to $1/L$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $1/L$ near zero, or to make some appropriate substitution of variable to make them better behaved.
 
