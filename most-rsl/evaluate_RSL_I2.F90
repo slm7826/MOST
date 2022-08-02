@@ -19,11 +19,18 @@ program test
   real    :: rsl_mu_1 = 0.67 ! parameter of RSL correction
   real    :: rsl_mu_m = 2.59 ! parameter of RSL momentum correction
   real    :: rsl_mu_t = 0.95 ! parameter of RSL heat and tracer correction
-
+  ! parameters of lookup tables for RSL integrals Im and It
+  real    :: a_min    = 0.01  !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
+  real    :: a_max    = 10    !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
+  integer :: a_nsteps = 100   !> number of lookup table steps along the axis a.
+  real    :: b_min    = -10.0 !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
+  real    :: b_max    =  10.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
+  integer :: b_nsteps = 100   !> number of lookup table steps along the axis b.
 
   namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
                                drag_min_moist, drag_min_mom, zeta_trans, &
-                               rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t
+                               rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t, &
+                               a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
 
   ! sampling parameters
   character(8) :: var = '' ! variable to sample
@@ -85,7 +92,7 @@ program test
      write (*,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
      stop 1
   end select
-  call most%set_rsl_functions(rsl)
+  call most%set_rsl_functions(rsl,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
 
 !   write(*,'(a20," = ",g14.5)') "a",a
   write(*,'(a20," = ",g14.5)') "1/a",1/a

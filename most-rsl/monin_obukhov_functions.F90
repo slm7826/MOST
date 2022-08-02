@@ -1,5 +1,6 @@
 module monin_obukhov_functions_mod
 
+use, intrinsic :: ieee_arithmetic
 use integrate_mod, only : integrate_romberg_trapezoid, integrate_romberg_midpoint, integrate_romberg_midpoint_inv
 use rsl_functions_mod, only : rsl_functions_T
 
@@ -19,6 +20,11 @@ type, abstract :: most_functions_T
   real :: rich_crit ! it is here because it is used in Monin-Obukhov solver for all stability options,
                     ! and in some stability functions
   class(rsl_functions_T), pointer :: rsl => NULL () ! pointer to RSL functions
+  ! lookup tables for RSL integrals Im and It
+  real, allocatable :: a(:)    ! coordinates along axis a
+  real, allocatable :: b(:)    ! coordinates along axis b
+  real, allocatable :: Im(:,:) ! values of integral Im
+  real, allocatable :: It(:,:) ! values of integral It
 contains
   procedure(most_derivative_function), deferred :: derivative_m ! stability correction for momentum
   procedure(most_derivative_function), deferred :: derivative_t ! stability correction for heat and tracers
@@ -118,11 +124,51 @@ real, parameter :: &
 contains ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-! set up rougness sublayer parameterization
-subroutine set_rsl_functions(this,rsl)
+!>/brief Set up roughness sublayer (RSL) parameterization
+!!
+!! given a pointer to RSL object, stores with the Monin-Obukhov stability correction
+!! functions, and calculates the look-up table for the RSL integrals
+subroutine set_rsl_functions(this,rsl, a_min, a_max, a_nsteps, b_min, b_max, b_nsteps)
   class(most_functions_T), intent(inout) :: this
-  class(rsl_functions_T),  pointer       :: rsl
+  class(rsl_functions_T),  pointer       :: rsl !> pointer to RSL function object
+  real,    intent(in) :: a_min     !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
+  real,    intent(in) :: a_max     !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
+  integer, intent(in) :: a_nsteps  !> number of lookup table steps along the axis a.
+  real,    intent(in) :: b_min     !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
+  real,    intent(in) :: b_max     !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
+  integer, intent(in) :: b_nsteps  !> number of lookup table steps along the axis b.
+
+  integer :: i,j
+  integer :: ierr
+  real    :: x0,x1,x, y0,y1,y
+
   this%rsl => rsl
+  if (.not.associated(this%rsl)) return ! don't do anything further
+
+  if (allocated(this%a))  deallocate(this%a)
+  if (allocated(this%b))  deallocate(this%b)
+  if (allocated(this%Im)) deallocate(this%Im)
+  if (allocated(this%It)) deallocate(this%It)
+
+  allocate(this%a(a_nsteps+1),             &
+           this%b(b_nsteps+1),             &
+           this%Im(a_nsteps+1,b_nsteps+1), &
+           this%It(a_nsteps+1,b_nsteps+1))
+
+  x0 = sqrt(a_min); x1 = sqrt(a_max)
+  ! sign (a, b) returns the absolute value of a times the sign of b
+  y0 = sign(sqrt(abs(b_min)),b_min); y1 = sign(sqrt(abs(b_max)),b_max)
+  do i = 0,a_nsteps
+     x = x0+(x1-x0)/a_nsteps*i
+     this%a(i+1) = x**2
+     do j = 0,b_nsteps
+        y = y0+(y1-y0)/b_nsteps*j
+        this%b(j+1) = sign(y**2,y)
+
+        call RSL_integral_I_m(this,this%a(i+1),this%b(i+1),this%Im(i+1,j+i),ierr)
+        call RSL_integral_I_t(this,this%a(i+1),this%b(i+1),this%It(i+1,j+i),ierr)
+     enddo
+  enddo
 end subroutine set_rsl_functions
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,6 +246,87 @@ pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr
       endif
    enddo
 end subroutine add_rsl_integral_t
+
+
+pure subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
+  class(most_functions_T), intent(in) :: most
+  real,    intent(in)  :: z1     !< lower limit of the integral R, m
+  real,    intent(in)  :: z2     !< upper limit of the integral R, m
+  real,    intent(in)  :: z_rsl  !< roughness sublayer length scale, m
+  real,    intent(in)  :: l_inv  !< reciprocal of Monin-Obukhov length, 1/m
+  real,    intent(in)  :: R(:,:) !< lookup table, Im or It
+  real,    intent(out) :: s      !< value of the integral
+  integer, intent(out) :: ierr   !< error code
+
+  real :: a1, a2, b, s1, s2
+  s  = ieee_value( s, ieee_signaling_nan )
+
+  a1 = z1/z_rsl
+  a2 = z2/z_rsl
+  b  = z_rsl*l_inv
+
+  call lookup_I_rsl(most,a1,b,R,s1,ierr); if (ierr.ne.0) return
+  call lookup_I_rsl(most,a2,b,R,s2,ierr); if (ierr.ne.0) return
+  s = s1 - s2
+end subroutine lookupR_rsl
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pure subroutine lookup_I_rsl(most,a,b,R,s,ierr)
+  class(most_functions_T), intent(in) :: most
+  real,    intent(in)  :: a      !< parameter of the integral, z_1/z_R
+  real,    intent(in)  :: b      !< parameter of the integral, z_R/L
+  real,    intent(in)  :: R(:,:) !< lookup table, Im or It
+  real,    intent(out) :: s      !< value of the integral
+  integer, intent(out) :: ierr   !< error code, 0 = no error
+
+  integer :: i,j
+  real    :: da,db,f1,f2
+
+  s    = ieee_value( s, ieee_signaling_nan )
+  ierr = 1
+  i = bisect(most%a,a) ; if (i<1.or.i>=size(most%a)) return
+  j = bisect(most%b,b) ; if (j<1.or.j>=size(most%b)) return
+
+  da = (a-most%a(i))/(most%a(i+1)-most%a(i))
+  f1 = R(i,j  )*(1-da)+R(i+1,j  )*da
+  f2 = R(i,j+1)*(1-da)+R(i+1,j+1)*da
+
+  db = (b-most%b(j))/(most%b(j+1)-most%b(j))
+  s  = f1*(1-db) + f1*db
+  ierr = 0
+end subroutine lookup_I_rsl
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pure integer function bisect(xx, x1)
+  real, intent(in) :: xx(:) ! array of boundaries
+  real, intent(in) :: x1    ! point to locate
+
+   ! ---- local vars
+  real    :: x              ! duplicate of input value
+  integer :: low, high, mid
+  integer :: n              ! size of the input array
+  logical :: ascending      ! if true, the coordinates are in ascending order
+
+  n = size(xx)
+  x = x1
+
+  ! find the coordinates
+  if (x >= xx(1).and.x<=xx(n)) then
+     low = 1; high = n
+     ascending = xx(n) > xx(1)
+     do while (high-low > 1)
+        mid = (low+high)/2
+        if (ascending.eqv.xx(mid) <= x) then
+           low = mid
+        else
+           high = mid
+        endif
+     enddo
+     bisect = low
+  else
+     bisect = -1
+  endif
+end function bisect
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 pure subroutine integralR_m_rsl(most, z1, z2, z_rsl, l_inv, s, ierr)
@@ -882,13 +1009,6 @@ contains
      call most%derivative_m(1,mask,zeta,phi,ierr_ignored)
      rsl = most%rsl%rsl_m(x)
      f = phi(1)*(1-rsl(1))/x
-!      if (.not.ieee_is_finite(f)) then
-!         write(*,*) 'input = ',x
-!         write(*,*) 'f = ', f, phi, rsl
-!         stop
-!      endif
-
-!      write(*,*) zeta, x, phi, rsl, f, ierr
   end function f
 end subroutine RSL_integral_I_m
 
