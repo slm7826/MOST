@@ -13,6 +13,7 @@ public :: make_most1_functions, make_most2_functions, make_brutsaert_functions, 
 ! not sure if these should remain public in the final code. They are used in the
 ! document to plot the dependence of the integral of various parameters
 public :: RSL_integral_I_m, RSL_integral_I_t
+public :: lookup_I_rsl
 
 ! representation of Monin-Obukhov Similarity Theory (MOST) stability correction functions
 type, abstract :: most_functions_T
@@ -158,17 +159,26 @@ subroutine set_rsl_functions(this,rsl, a_min, a_max, a_nsteps, b_min, b_max, b_n
   x0 = sqrt(a_min); x1 = sqrt(a_max)
   ! sign (a, b) returns the absolute value of a times the sign of b
   y0 = sign(sqrt(abs(b_min)),b_min); y1 = sign(sqrt(abs(b_max)),b_max)
-  do i = 0,a_nsteps
-     x = x0+(x1-x0)/a_nsteps*i
-     this%a(i+1) = x**2
-     do j = 0,b_nsteps
-        y = y0+(y1-y0)/b_nsteps*j
-        this%b(j+1) = sign(y**2,y)
 
-        call RSL_integral_I_m(this,this%a(i+1),this%b(i+1),this%Im(i+1,j+i),ierr)
-        call RSL_integral_I_t(this,this%a(i+1),this%b(i+1),this%It(i+1,j+i),ierr)
-     enddo
+  do i = 1,a_nsteps+1
+     x = x0+(x1-x0)/a_nsteps*(i-1)
+     this%a(i) = x**2
   enddo
+  do j = 1,b_nsteps+1
+     y = y0+(y1-y0)/b_nsteps*(j-1)
+     this%b(j) = sign(y**2,y)
+  enddo
+
+  do i = 1,a_nsteps+1
+  do j = 1,b_nsteps+1
+     call RSL_integral_I_m(this,this%a(i),this%b(j),this%Im(i,j),ierr)
+     call RSL_integral_I_t(this,this%a(i),this%b(j),this%It(i,j),ierr)
+  enddo
+  enddo
+  write(*,*) 'a ='
+  write(*,'(10g14.5)')this%a
+  write(*,*) 'b ='
+  write(*,'(10g14.5)')this%b
 end subroutine set_rsl_functions
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -248,7 +258,7 @@ pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr
 end subroutine add_rsl_integral_t
 
 
-pure subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
+subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: z1     !< lower limit of the integral R, m
   real,    intent(in)  :: z2     !< upper limit of the integral R, m
@@ -271,7 +281,7 @@ pure subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
 end subroutine lookupR_rsl
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pure subroutine lookup_I_rsl(most,a,b,R,s,ierr)
+subroutine lookup_I_rsl(most,a,b,R,s,ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: a      !< parameter of the integral, z_1/z_R
   real,    intent(in)  :: b      !< parameter of the integral, z_R/L
@@ -288,11 +298,17 @@ pure subroutine lookup_I_rsl(most,a,b,R,s,ierr)
   j = bisect(most%b,b) ; if (j<1.or.j>=size(most%b)) return
 
   da = (a-most%a(i))/(most%a(i+1)-most%a(i))
+  if (.not.(0.0<=da.and.da<=1.0)) then
+     write(*,*)'da',da,i
+  endif
   f1 = R(i,j  )*(1-da)+R(i+1,j  )*da
   f2 = R(i,j+1)*(1-da)+R(i+1,j+1)*da
 
   db = (b-most%b(j))/(most%b(j+1)-most%b(j))
-  s  = f1*(1-db) + f1*db
+  if (.not.(0.0<=db.and.db<=1.0)) then
+     write(*,*)'db',db,j
+  endif
+  s  = f1*(1-db) + f2*db
   ierr = 0
 end subroutine lookup_I_rsl
 

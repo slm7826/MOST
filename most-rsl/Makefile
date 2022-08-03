@@ -1,6 +1,6 @@
 # EXECUTABLES = MOST.x phi.x SIM.x
 EXECUTABLES = MOST.x PROFILE.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F.x
-TESTS       = test_integrate.x
+TESTS       = test_integrate.x test_lookup.x
 GARBAGE=$(EXECUTABLES) $(TESTS)
 
 ifeq ($(FC),gfortran)
@@ -23,7 +23,7 @@ realclean: clean
 	rm -f input.nml *.out.txt
 
 # dependencies
-$(EXECUTABLES)            : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o
+$(EXECUTABLES) test_lookup.x : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o
 monin_obukhov_functions.o : rsl_functions.o integrate.o
 monin_obukhov_kernel.o    : monin_obukhov_functions.o
 test_integrate.x          : integrate.o
