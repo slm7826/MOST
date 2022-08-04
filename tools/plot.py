@@ -13,7 +13,7 @@ def decomment(csvfile):
     for row in csvfile:
         # print(pastHeader,row[0:2])
         if pastHeader:
-            yield row
+            yield re.sub(r'\s*,\s*',',',row).strip()
         if re.match(r'\s*RESULTS:',row):
             pastHeader = True
 
@@ -113,6 +113,7 @@ for infile in args.input:
             for (k,v) in row.items(): # go over each column name and value
                 columns[k].append(float(v)) # append the value into the appropriate list
                                       # based on column name k
+    # print(columns.keys())
     # put together plot label
     for v in variables:
         label = []
