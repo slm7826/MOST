@@ -915,7 +915,7 @@ To make estimation of $I_i$ more convenient, we can make a substitution $z' = z/
 \end{align}
 \end{subequations}
 
-Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_i$ can be expressed in terms of that variable if necessary. Figure~\ref{fig:integralIm} shows the integrals $I_s$ --- with typical AM4/ESM4 $\fstab_m$ and Ghannam (2002) $\frsl_m$ --- as a function of parameters $a$ and $b$.
+Expressed as a function of two parameters, this integral can feasibly be tabulated in a look-up table. Remembering that $\zeta_a = z_a/L$ (and therefore $L=z_a/\zeta_a$), $I_i$ can be expressed in terms of that variable if necessary. Figure~\ref{fig:integralIm} shows the integrals $I_s$ --- with typical AM4/ESM4 $\fstab_m$ and Ghannam (2002) $\frsl_m$ --- as a function of parameters $a$ and $b$. Figure~\ref{fig:integralIm_Bru} shows the same plot for \cite{Brutsaert2005} stability functions.
 
 \begin{figure}
   \centering
@@ -940,12 +940,39 @@ Expressed as a function of two parameters, this integral can feasibly be tabulat
       \includegraphics[width=\panelW]{most-rsl/output/integral_I2/Ih_vs_b.pdf}
   }
 
-  \caption[$I_i$ vs various parameters]{
+  \caption[$I_i$ vs various parameters for stable option 2]{
 Dependence of RSL integral $I_i(a,b)$ on parameters $a = z_1/\zR$ and $b= \zR/L$. The formulation of RSL correction $\frsl_m$
 is Ghannam (2002) [equation~\eqref{eq:Ghannam2022} in this document], while stability correction $\fstab_m$ is as in typical
 ESM4/AM4 settings [stable option 2].
 Panels (c,d) show the same data as panels (a,b), but using different abscissa to emphasize the behavior of $I_i(a,b)$ when $a$ is close to zero.}
   \label{fig:integralIm}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \subfloat[dependence of $I_m$ of $a$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Im_vs_a.pdf}
+  }
+  \subfloat[dependence of $I_h$ of $a$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Ih_vs_a.pdf}
+  }
+
+  \subfloat[dependence of $I_m$ of $1/a$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Im_vs_aInv.pdf}
+  }
+  \subfloat[dependence of $I_h$ of $1/a$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Ih_vs_aInv.pdf}
+  }
+
+  \subfloat[dependence of $I_m$ of $b$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Im_vs_b.pdf}
+  }
+  \subfloat[dependence of $I_h$ of $b$]{
+      \includegraphics[width=\panelW]{most-rsl/output/integral_IB/Ih_vs_b.pdf}
+  }
+
+  \caption[$I_i$ vs various parameters for Brutsaert stability functions]{Same as Figure~\ref{fig:integralIm}, except for \cite{Brutsaert2005} stability correction functions}
+  \label{fig:integralIm_Bru}
 \end{figure}
 
 Parameter $a=z_1/\zR$ is always positive. The integral stability correction functions $\FRSL_i$ are evaluated when solving for surface fluxes, with $z_1 = z_a$ ($\approx \SI{17.5}{\m}$ in AM4 and its ilk), and in calculating the vertical profile within Monin-Obukhov layer (\verb|mo_profile| is called from surface flux calculation module, and also from \verb|atmos_tracer_driver| via \verb|get_w10m|). $z_R$ can be close to zero, or be as high as \SI{100}{\m}. Therefore the range of $a=z_1/z_R$ can be from very close to zero (when $z_1$ is $\zm$ or $\zh$) to pretty large values when $\zR$ is low.
@@ -954,7 +981,7 @@ When $a$ is close to zero, the function under the integral is not guaranteed to 
 
 $\zR/L$ can be either positive or negative, depending on sign of $L$.
 
-Figure~\ref{fig:integralIm} indicates that the integrals $I_i$ are fairly well-behaved along the $b$ axis, but they have relatively steep derivatives with respect to around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $b$ near zero, or to make some appropriate substitution of variable to make them better behaved. The same caveat applies even to the grater degree to the behavior of $I_i$ along the $a$ axis near zero.
+Figure~\ref{fig:integralIm} indicates that the integrals $I_i$ are fairly well-behaved along the $b$ axis, but they have relatively steep derivatives with respect to $b$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $b$ near zero, or to make some appropriate substitution of variable to make them better behaved. The same caveat applies even more to the behavior of $I_i$ along the $a$ axis near zero.
 
 \section{Roughness sublayer influence on fluxes and associated variables}
 

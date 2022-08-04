@@ -100,7 +100,7 @@ program test
   write(*,'(a20," = ",g14.5)') "1/b",1/b
 
   write(*,*)'RESULTS:'
-  write(*,'(a)')'a,b,1/a,1/b,I_m,I_h,ierr_m,ierr_t'
+  write(*,'(99(a14,:,","))')'a','b','1/a','1/b','I_m','I_h','ierr_m','ierr_t'
   do i = 0,nsamples
      x = x0+i*(x1-x0)/nsamples
      select case(var)
