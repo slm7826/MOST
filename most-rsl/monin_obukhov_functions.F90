@@ -258,13 +258,13 @@ pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr
 end subroutine add_rsl_integral_t
 
 
-subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
+subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, table, s, ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: z1     !< lower limit of the integral R, m
   real,    intent(in)  :: z2     !< upper limit of the integral R, m
   real,    intent(in)  :: z_rsl  !< roughness sublayer length scale, m
   real,    intent(in)  :: l_inv  !< reciprocal of Monin-Obukhov length, 1/m
-  real,    intent(in)  :: R(:,:) !< lookup table, Im or It
+  real,    intent(in)  :: table(:,:) !< lookup table, Im or It
   real,    intent(out) :: s      !< value of the integral
   integer, intent(out) :: ierr   !< error code
 
@@ -275,17 +275,17 @@ subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, R, s, ierr)
   a2 = z2/z_rsl
   b  = z_rsl*l_inv
 
-  call lookup_I_rsl(most,a1,b,R,s1,ierr); if (ierr.ne.0) return
-  call lookup_I_rsl(most,a2,b,R,s2,ierr); if (ierr.ne.0) return
+  call lookup_I_rsl(most,a1,b,table,s1,ierr); if (ierr.ne.0) return
+  call lookup_I_rsl(most,a2,b,table,s2,ierr); if (ierr.ne.0) return
   s = s1 - s2
 end subroutine lookupR_rsl
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-subroutine lookup_I_rsl(most,a,b,R,s,ierr)
+subroutine lookup_I_rsl(most,a,b,table,s,ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: a      !< parameter of the integral, z_1/z_R
   real,    intent(in)  :: b      !< parameter of the integral, z_R/L
-  real,    intent(in)  :: R(:,:) !< lookup table, Im or It
+  real,    intent(in)  :: table(:,:) !< lookup table, Im or It
   real,    intent(out) :: s      !< value of the integral
   integer, intent(out) :: ierr   !< error code, 0 = no error
 
@@ -301,8 +301,8 @@ subroutine lookup_I_rsl(most,a,b,R,s,ierr)
   if (.not.(0.0<=da.and.da<=1.0)) then
      write(*,*)'da',da,i
   endif
-  f1 = R(i,j  )*(1-da)+R(i+1,j  )*da
-  f2 = R(i,j+1)*(1-da)+R(i+1,j+1)*da
+  f1 = table(i,j  )*(1-da)+table(i+1,j  )*da
+  f2 = table(i,j+1)*(1-da)+table(i+1,j+1)*da
 
   db = (b-most%b(j))/(most%b(j+1)-most%b(j))
   if (.not.(0.0<=db.and.db<=1.0)) then
