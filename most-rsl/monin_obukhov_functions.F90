@@ -1,5 +1,8 @@
 module monin_obukhov_functions_mod
 
+#define _PURE
+!#include <fms_platform.h>
+
 use, intrinsic :: ieee_arithmetic
 use integrate_mod, only : integrate_romberg_trapezoid, integrate_romberg_midpoint, integrate_romberg_midpoint_inv
 use rsl_functions_mod, only : rsl_functions_T
@@ -44,7 +47,7 @@ contains
 end type most_functions_T
 
 abstract interface
-  pure subroutine most_derivative_function(this,n,mask,zeta,phi,ier)
+  _PURE subroutine most_derivative_function(this,n,mask,zeta,phi,ier)
      import :: most_functions_T
      class(most_functions_T), intent(in)   :: this
      integer, intent(in   )                :: n
@@ -53,7 +56,7 @@ abstract interface
      real   , intent(inout), dimension(n)  :: phi
      integer, intent(  out)                :: ier
   end subroutine most_derivative_function
-  pure subroutine most_integral_function(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+  _PURE subroutine most_integral_function(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
      import :: most_functions_T
      class(most_functions_T), intent(in)   :: this
      integer, intent(in   )                :: n
@@ -62,7 +65,7 @@ abstract interface
      real   , intent(inout), dimension(n)  :: F
      integer, intent(  out)                :: ier
   end subroutine most_integral_function
-  pure subroutine most_stable_mix(this, n, rich, mix, ier)
+  _PURE subroutine most_stable_mix(this, n, rich, mix, ier)
      import :: most_functions_T
      class(most_functions_T), intent(in)   :: this
      integer, intent(in   )                :: n
@@ -183,7 +186,7 @@ end subroutine set_rsl_functions
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! add the value of integral stability function roughness sublayer correction for momentum
-pure subroutine add_rsl_integral_m(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
+_PURE subroutine add_rsl_integral_m(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
    class(most_functions_T), intent(in) :: this
    integer, intent(in)    :: n          ! size of the input/output arrays
    logical, intent(in)    :: mask(n)    ! don't do calculations where this mask is FALSE
@@ -209,11 +212,11 @@ pure subroutine add_rsl_integral_m(this, n, mask, l_inv, z1, z2, zR, F, df, ierr
       if (.not.mask(i))    cycle ! skip maske-out points
       if (.not.zR(i)>0) cycle ! skip points without roughness sublayer
 
-      call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i), R0, ierr)
+         call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i), R0, ierr)
       if (present(F)) F(i) = F(i) - R0
       ! derivative of RSL correction w.r.t has to be calculated numerically
       if (present(df)) then
-         call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i)+delta_l_inv, R1, ierr)
+            call integralR_m_rsl(this, z1(i),z2(i),zR(i), l_inv(i)+delta_l_inv, R1, ierr)
          dF(i) = dF(i) - (R1-R0)/(delta_l_inv*z2(i))
       endif
    enddo
@@ -221,7 +224,7 @@ end subroutine add_rsl_integral_m
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! add the value of integral stability function roughness sublayer correction for heat
-pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
+_PURE subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr)
    class(most_functions_T), intent(in) :: this
    integer, intent(in)    :: n          ! size of the input/output arrays
    logical, intent(in)    :: mask(n)    ! don't do calculations where this mask is FALSE
@@ -247,18 +250,18 @@ pure subroutine add_rsl_integral_t(this, n, mask, l_inv, z1, z2, zR, F, df, ierr
       if (.not.mask(i))    cycle ! skip maske-out points
       if (.not.zR(i)>0) cycle ! skip points without roughness sublayer
 
-      call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i), R0, ierr)
+         call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i), R0, ierr)
       if (present(F)) F(i) = F(i) - R0
       ! derivative of RSL correction w.r.t has to be calculated numerically
       if (present(df)) then
-         call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i)+delta_l_inv, R1, ierr)
+            call integralR_t_rsl(this, z1(i), z2(i), zR(i), l_inv(i)+delta_l_inv, R1, ierr)
          dF(i) = dF(i) - (R1-R0)/(delta_l_inv*z2(i))
       endif
    enddo
 end subroutine add_rsl_integral_t
 
 
-subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, table, s, ierr)
+_PURE subroutine lookup_R_rsl(most, z1, z2, z_rsl, l_inv, table, s, ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: z1     !< lower limit of the integral R, m
   real,    intent(in)  :: z2     !< upper limit of the integral R, m
@@ -278,10 +281,10 @@ subroutine lookupR_rsl(most, z1, z2, z_rsl, l_inv, table, s, ierr)
   call lookup_I_rsl(most,a1,b,table,s1,ierr); if (ierr.ne.0) return
   call lookup_I_rsl(most,a2,b,table,s2,ierr); if (ierr.ne.0) return
   s = s1 - s2
-end subroutine lookupR_rsl
+end subroutine lookup_R_rsl
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-subroutine lookup_I_rsl(most,a,b,table,s,ierr)
+_PURE subroutine lookup_I_rsl(most,a,b,table,s,ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: a      !< parameter of the integral, z_1/z_R
   real,    intent(in)  :: b      !< parameter of the integral, z_R/L
@@ -345,7 +348,7 @@ pure integer function bisect(xx, x1)
 end function bisect
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pure subroutine integralR_m_rsl(most, z1, z2, z_rsl, l_inv, s, ierr)
+_PURE subroutine integralR_m_rsl(most, z1, z2, z_rsl, l_inv, s, ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: z1, z2 ! lower and upper limits of the integral, m
   real,    intent(in)  :: z_rsl  ! roughness sublayer length scale, m
@@ -358,7 +361,7 @@ pure subroutine integralR_m_rsl(most, z1, z2, z_rsl, l_inv, s, ierr)
 
 contains
   ! internal function that returns the integrand
-  pure real function f1(x)
+  _PURE real function f1(x)
      real, intent(in) :: x
 
      logical :: mask_1(1)
@@ -377,7 +380,7 @@ contains
 end subroutine integralR_m_rsl
 
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pure subroutine integralR_t_rsl(most,z1, z2, z_rsl, l_inv, s, ierr)
+_PURE subroutine integralR_t_rsl(most,z1, z2, z_rsl, l_inv, s, ierr)
   class(most_functions_T), intent(in) :: most
   real,    intent(in)  :: z1, z2 ! lower and upper limits of the integral, m
   real,    intent(in)  :: z_rsl  ! roughness sublayer length scale, m
@@ -390,7 +393,7 @@ pure subroutine integralR_t_rsl(most,z1, z2, z_rsl, l_inv, s, ierr)
 
 contains
   ! internal function that returns the integrand
-  pure real function f1(x)
+  _PURE real function f1(x)
      real, intent(in) :: x
 
      logical :: mask_1(1)
@@ -420,7 +423,7 @@ end function make_neutral_functions
 
 ! neutral stability functions are not really used: instead, a simplified non-iterative
 ! special case solution is employed by Monin-Obukhov kernel module
-pure subroutine neutral_deriv_m(this,n,mask,zeta,phi,ier)
+_PURE subroutine neutral_deriv_m(this,n,mask,zeta,phi,ier)
   class(neutral_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -432,7 +435,7 @@ pure subroutine neutral_deriv_m(this,n,mask,zeta,phi,ier)
   phi = 1.0
 end subroutine neutral_deriv_m
 
-pure subroutine neutral_deriv_t(this,n,mask,zeta,phi,ier)
+_PURE subroutine neutral_deriv_t(this,n,mask,zeta,phi,ier)
   class(neutral_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -444,7 +447,7 @@ pure subroutine neutral_deriv_t(this,n,mask,zeta,phi,ier)
   phi = 1.0
 end subroutine neutral_deriv_t
 
-pure subroutine neutral_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine neutral_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(neutral_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: zeta, zeta_0, ln_z_z0
@@ -456,7 +459,7 @@ pure subroutine neutral_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   F = ln_z_z0
 end subroutine neutral_integral_m
 
-pure subroutine neutral_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine neutral_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(neutral_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -468,7 +471,7 @@ pure subroutine neutral_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier
   F = ln_z_z0
 end subroutine neutral_integral_tq
 
-pure subroutine neutral_stable_mix(this, n, rich, mix, ier)
+_PURE subroutine neutral_stable_mix(this, n, rich, mix, ier)
   class(neutral_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: rich
@@ -490,7 +493,7 @@ function make_most1_functions(rich_crit) result(ptr)
    ptr%rich_crit = rich_crit
 end function make_most1_functions
 
-pure subroutine most1_deriv_m(this,n,mask,zeta,phi,ier)
+_PURE subroutine most1_deriv_m(this,n,mask,zeta,phi,ier)
   class(most1_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -517,7 +520,7 @@ pure subroutine most1_deriv_m(this,n,mask,zeta,phi,ier)
   end where
 end subroutine most1_deriv_m
 
-pure subroutine most1_deriv_t(this,n,mask,zeta,phi,ier)
+_PURE subroutine most1_deriv_t(this,n,mask,zeta,phi,ier)
   class(most1_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -542,7 +545,7 @@ pure subroutine most1_deriv_t(this,n,mask,zeta,phi,ier)
   end where
 end subroutine most1_deriv_t
 
-pure subroutine most1_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine most1_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(most1_functions_T), intent(in)     :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: zeta, zeta_0, ln_z_z0
@@ -583,7 +586,7 @@ pure subroutine most1_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   end where
 end subroutine most1_integral_m
 
-pure subroutine most1_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine most1_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(most1_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -615,7 +618,7 @@ pure subroutine most1_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
 
 end subroutine most1_integral_tq
 
-pure subroutine most1_stable_mix(this, n, rich, mix, ier)
+_PURE subroutine most1_stable_mix(this, n, rich, mix, ier)
   class(most1_functions_T), intent(in)  :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: rich
@@ -654,7 +657,7 @@ function make_most2_functions(rich_crit, zeta_trans) result(ptr)
    ptr%zeta_trans = zeta_trans
 end function make_most2_functions
 
-pure subroutine most2_deriv_m(this,n,mask,zeta,phi,ier)
+_PURE subroutine most2_deriv_m(this,n,mask,zeta,phi,ier)
   class(most2_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -687,7 +690,7 @@ pure subroutine most2_deriv_m(this,n,mask,zeta,phi,ier)
   end where
 end subroutine most2_deriv_m
 
-pure subroutine most2_deriv_t(this,n,mask,zeta,phi,ier)
+_PURE subroutine most2_deriv_t(this,n,mask,zeta,phi,ier)
   class(most2_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -717,7 +720,7 @@ pure subroutine most2_deriv_t(this,n,mask,zeta,phi,ier)
   end where
 end subroutine most2_deriv_t
 
-pure subroutine most2_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine most2_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(most2_functions_T), intent(in)     :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: zeta, zeta_0, ln_z_z0
@@ -774,7 +777,7 @@ pure subroutine most2_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   end where
 end subroutine most2_integral_m
 
-pure subroutine most2_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine most2_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(most2_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -822,7 +825,7 @@ pure subroutine most2_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   end where
 end subroutine most2_integral_tq
 
-pure subroutine most2_stable_mix(this, n, rich, mix, ier)
+_PURE subroutine most2_stable_mix(this, n, rich, mix, ier)
   class(most2_functions_T), intent(in)  :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: rich
@@ -856,7 +859,7 @@ function make_brutsaert_functions(rich_crit) result(ptr)
    ptr%rich_crit = rich_crit
 end function make_brutsaert_functions
 
-pure subroutine brutsaert_deriv_m(this,n,mask,zeta,phi,ier)
+_PURE subroutine brutsaert_deriv_m(this,n,mask,zeta,phi,ier)
   class(brutsaert_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -885,7 +888,7 @@ pure subroutine brutsaert_deriv_m(this,n,mask,zeta,phi,ier)
   enddo
 end subroutine brutsaert_deriv_m
 
-pure subroutine brutsaert_deriv_t(this,n,mask,zeta,phi,ier)
+_PURE subroutine brutsaert_deriv_t(this,n,mask,zeta,phi,ier)
   class(brutsaert_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -936,7 +939,7 @@ elemental real function brutsaert_psi_m(this, zeta) result(psi_m)
   endif
 end function brutsaert_psi_m
 
-pure subroutine brutsaert_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine brutsaert_integral_m(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(brutsaert_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: zeta, zeta_0, ln_z_z0
@@ -967,7 +970,7 @@ elemental real function brutsaert_psi_h(this, zeta) result(psi_h)
   endif
 end function brutsaert_psi_h
 
-pure subroutine brutsaert_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
+_PURE subroutine brutsaert_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, ier)
   class(brutsaert_functions_T), intent(in)    :: this
   integer, intent(in   )                :: n
   logical, intent(in   ), dimension(n)  :: mask
@@ -980,7 +983,7 @@ pure subroutine brutsaert_integral_tq(this, n, mask, zeta, zeta_0, ln_z_z0, F, i
   end where
 end subroutine brutsaert_integral_tq
 
-pure subroutine brutsaert_stable_mix(this, n, rich, mix, ier)
+_PURE subroutine brutsaert_stable_mix(this, n, rich, mix, ier)
   class(brutsaert_functions_T), intent(in) :: this
   integer, intent(in   )                :: n
   real   , intent(in   ), dimension(n)  :: rich
@@ -1011,9 +1014,9 @@ subroutine RSL_integral_I_m(most,a,b,s,ierr)
      s = 0.0; ierr = 0
      return
   endif
-  call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
 contains
-  pure real function f(x)
+  _PURE real function f(x)
      real, intent(in) :: x
 
      real,    dimension(1) :: zeta,phi,rsl
@@ -1045,9 +1048,9 @@ subroutine RSL_integral_I_t(most,a,b,s,ierr)
      s = 0.0; ierr = 0
      return
   endif
-  call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     call integrate_romberg_midpoint_inv(f,a,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
 contains
-  pure real function f(x)
+  _PURE real function f(x)
      real, intent(in) :: x
 
      real,    dimension(1) :: zeta,phi,rsl
