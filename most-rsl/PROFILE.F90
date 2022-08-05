@@ -1,4 +1,7 @@
 program test
+
+  use iso_fortran_env, only : error_unit
+
   use rsl_functions_mod
   use monin_obukhov_functions_mod
   use monin_obukhov_kernel
@@ -52,9 +55,12 @@ program test
   real :: zR = 1.0 ! roughness sublayer thickness, m
   real :: gust_factor = 1.0
   ! sampling parameters
+  real :: z1 = 2.0, z2 = 17.5
   integer :: nsamples ! number of intervals
+
+  logical :: do_lookup = .FALSE.
   namelist /most_nml/ p_atm, t_atm, t_sfc, u_atm, z_atm, z0m, k_over_B, zR, gust_factor, &
-       nsamples
+       z1,z2,nsamples,do_lookup
   ! - end of namelists
   integer :: ios
   integer :: n, i
@@ -64,7 +70,7 @@ program test
 
   ! inputs
   real,    dimension(1) :: z, z0, zt, zq, zR1
-  real    :: x
+  real    :: zz
   logical :: avail(1)
   ! outputs
   real,    dimension(1) :: &
@@ -80,12 +86,12 @@ program test
   open (701, file='input.nml')
   read (701, monin_obukhov_nml, iostat=ios, iomsg=message)
   if (ios/=0) then
-     write (*,'(a)')'Error reading monin_obukhov_nml : '//trim(message)
+     write (error_unit,'(a)')'Error reading monin_obukhov_nml : '//trim(message)
      stop 1
   endif
   read (701, most_nml, iostat=ios, iomsg=message)
   if (ios/=0) then
-     write(*,'(a)')'Error reading most_nml : '//trim(message)
+     write(error_unit,'(a)')'Error reading most_nml : '//trim(message)
      stop 1
   endif
 
@@ -104,6 +110,8 @@ program test
      write (*,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
      stop 1
   end select
+
+!   most%do_lookup = do_lookup
 
   ! set up roughness sublayer (RSL) corrections
   select case(trim(rsl_option))
@@ -150,17 +158,25 @@ program test
       gust = 0.
   end where
 
-  write(*,*)'zeta=',zeta
-  write(*,*)'1/L=' ,zeta/z
-  write(*,*)'flux_t =' ,flux_t
-  write(*,*)'flux_m =' ,flux_m
+  write(*,100)'z0m' ,z0
+  write(*,100)'z0h' ,zt
+  write(*,100)'rich' ,rich
+  write(*,100)'zeta',zeta
+  write(*,100)'1/L' ,zeta/z
+  write(*,100)'u_star' ,u_star
+  write(*,100)'b_star' ,b_star
+  write(*,100)'flux_t' ,flux_t
+  write(*,100)'flux_m' ,flux_m
+  write(*,100)'cd_m' ,cd_m
+  write(*,100)'cd_t' ,cd_t
+100 format(a12,"=",g14.5)
 
   write(*,*)'RESULTS:'
-  write(*,'(a)')'z,u,t,del_m,del_h,ier'
+  write(*,'(99(a14,:,","))')'z','u','t','del_m','del_h','ier'
   do i = 0,nsamples
-     x = z0m+i*(z_atm-z0m)/nsamples
+     zz = z1+i*(z2-z1)/nsamples
      call monin_obukhov_profile_1d(most, vonkarm, n, &
-        x, x, z, z0, zt, zq, zR1, u_star, b_star, b_star, del_m, del_h, del_q, ier, avail)
-     write(*,'(99(g15.6,:,","))') x, u_atm*del_m, t_atm*del_h+t_sfc*(1-del_h),del_m,del_h, ier
+        zz, zz, z, z0, zt, zq, zR1, u_star, b_star, b_star, del_m, del_h, del_q, ier, avail)
+     write(*,'(99(g15.6,:,","))') zz, u_atm*del_m, t_atm*del_h+t_sfc*(1-del_h),del_m,del_h, ier
   enddo
 end program test
