@@ -229,7 +229,7 @@ $\rcrit$ is a namelist parameter \verb|rich_crit| in \verb|monin_obukhov_nml|.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Stable option 2}\label{sect:stable2}
 In unstable regime, stability corrections are the same as in stable option 1, equations~\eqref{eq:fms-unstable}. In stable regime
-\begin{equation}
+\begin{equation}\label{eq:option-2-stable}
    \fstab_m(\zeta) = \fstab_h(\zeta) = \begin{cases}
       1+5\zeta, & \zeta < \zeta_t \\
       1+5 \zeta_t + \frac{\zeta-\zeta_t}{\rcrit}, & \zeta \ge \zeta_t
@@ -240,7 +240,7 @@ Note that in stable case, $\fstab_m(\zeta) = \fstab_h(\zeta)$, like they were in
 $\zeta_t$ is a namelist parameter \verb|zeta_trans| in \verb|monin_obukhov_nml|.
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-\subsection{Brutsaert}
+\subsection{Brutsaert} \label{sect:option-brutsaert}
 Stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code on branch \verb|usr/slm/sfcx|, together with refactoring of the Monin-Obukhov code to make it easier to expand and manage.
 \todo[inline]{the implementation is still incomplete, stable\_mix needs to be implemented yet. It is not very simple because the stable case correction functions are fairly complicated, and finding $\zeta$ for given $\rich$ can be expensive if done numerically.}
 
@@ -904,11 +904,10 @@ Second term of equation~\eqref{eq:FRSL}
 with each of the integrals $I_i$ now depending on one less parameter.
 
 To make estimation of $I_i$ more convenient, we can make a substitution $z' = z/\zR$; $z=\zR z'$
-\begin{subequations}
+\begin{subequations}\label{eq:integralI}
 \begin{align}
     I_i (a,b) & =
         \int_{a}^\infty \frac{\fstab_i(b z')\left[1-\frsl_i(z')\right]}{z'} dz'
-    \label{eq:integralI}
     \\
     a & = z_1/\zR \\
     b & = \zR/L
@@ -944,7 +943,9 @@ Expressed as a function of two parameters, this integral can feasibly be tabulat
 Dependence of RSL integral $I_i(a,b)$ on parameters $a = z_1/\zR$ and $b= \zR/L$. The formulation of RSL correction $\frsl_m$
 is Ghannam (2002) [equation~\eqref{eq:Ghannam2022} in this document], while stability correction $\fstab_m$ is as in typical
 ESM4/AM4 settings [stable option 2].
-Panels (c,d) show the same data as panels (a,b), but using different abscissa to emphasize the behavior of $I_i(a,b)$ when $a$ is close to zero.}
+Panels (c,d) show the same data as panels (a,b), but using different abscissa to emphasize the behavior of $I_i(a,b)$ when $a$ is close to zero.
+Note that in panels (e,f) the function is linear for values of $b \ge \zeta_t/a$ ($\zeta_t$ is \num{0.5} in this example),
+see text around equation~\eqref{eq:b-linearity} for explanation.}
   \label{fig:integralIm}
 \end{figure}
 
@@ -975,14 +976,36 @@ Panels (c,d) show the same data as panels (a,b), but using different abscissa to
   \label{fig:integralIm_Bru}
 \end{figure}
 
-Parameter $a=z_1/\zR$ is always positive. The integral stability correction functions $\FRSL_i$ are evaluated when solving for surface fluxes, with $z_1 = z_a$ ($\approx \SI{17.5}{\m}$ in AM4 and its ilk), and in calculating the vertical profile within Monin-Obukhov layer (\verb|mo_profile| is called from surface flux calculation module, and also from \verb|atmos_tracer_driver| via \verb|get_w10m|). $z_R$ can be close to zero, or be as high as \SI{100}{\m}. Therefore the range of $a=z_1/z_R$ can be from very close to zero (when $z_1$ is $\zm$ or $\zh$) to pretty large values when $\zR$ is low.
+Parameter $a=z_1/\zR$ is always positive. The integral stability correction functions $\FRSL_i$ are evaluated when solving for surface fluxes, with $z_1 = z_a$ ($\approx \SI{17.5}{\m}$ in AM4 and its ilk), and in calculating the vertical profile within Monin-Obukhov layer (\verb|mo_profile| is called from surface flux calculation module, and also from \verb|atmos_tracer_driver| via \verb|get_w10m|). $z_R$ can be close to zero, or be as high as \SI{100}{\m}. Therefore the range of $a=z_1/z_R$ can be very wide --- from values that are very close to zero (when $z_1$ is $\zm$ or $\zh$) to large values when $\zR$ is low. In a single-day test (standalone land model simulation driven by external forcing, with stability option 2 as described in Section~\ref{sect:stable2} and without roughness sublayer corrections) the range of $a$ was \numrange{6.2e-5}{89.75}.
 
 When $a$ is close to zero, the function under the integral is not guaranteed to remain finite. Moreover, it may be proportional to $1/z'$, which is easy to demonstrate in neutral case: $\fstab_i$ is 1, and $1-\frsl_i$ is also close to 1 when $z' \to 0$. That means that when $a \to 0$ the $I_i \to \infty$.
 
-$\zR/L$ can be either positive or negative, depending on sign of $L$.
+Parameter $b = \zR/L$ can be either positive or negative, depending on sign of $L$. In the same single-day test run mentioned above the range of $b$ was \numrange{-0.33}{6.4e4}. While the positive proof was not  obtained, the incredibly high values of $b=\zR/L$ is likely due to the situations of poor convergence of equation~\eqref{eq:zeta} in the vicinity of $\rbulk \approx \rcrit$.
+
+Such a wide range of $b$ makes it difficult to construct a lookup table that covers all possible values with sufficient accuracy. However, in some cases the behavior of $I_i$ at high $b$ is not difficult to evaluate analytically. For example, for stable option 2 the stability correction \eqref{eq:option-2-stable} at high $z' \ge \zeta_t L$ can be written as
+\begin{equation}
+    \fstab_m( z') = \fstab_h(b z') = c_0  + c_1 b z'
+\end{equation}
+with
+$c_0 = 1 + (5-1/\rcrit) \zeta_t$, and
+$c_1 = 1/\rcrit$
+
+In this range, with Ghannam (2022) stability functions the integral $I$~\eqref{eq:integralI} becomes
+\begin{align}\label{eq:b-linearity}
+    I_i & = \int_{a}^\infty \frac{(c_0 + c_1 b z')\mu_1 \exp(-\mu_i z')}{z'} dz' \notag \\
+        & = c_0 \mu_1 \int_{a}^\infty \frac{\exp(-\mu_i z')}{z'} dz' +
+            c_1 \mu_1 b \int_{a}^\infty \exp(-\mu_i z') dz' \notag \\
+        & = f(a) + c_1 b \exp(-\mu_i a)
+\end{align}
+That is, it is a linear function of $b$ with coefficients that depend on $a$ and the parameters of stability corrections.
+This expression holds true (and should be exact) for the values of $z_1/L = ba \ge \zeta_t$.
+
+Alternative stability correction functions --- such as \cite{Brutsaert2005} described in Section~\ref{sect:option-brutsaert} --- may not exhibit such convenient behavior, but then, since they are not linear with $\zeta$ at $\zeta \to \infty$, and the convergence issues described in Section~\ref{sect:convergence} are not likely to arize, one could hope that the maximum values of parameter $b$ would not be so high.
+\todo[inline]{In the code, need a way to detect values of $a$ and $b$ going out of range of reliable estimates: lookup table or lookup table + extrapolation at high $b$.}
 
 Figure~\ref{fig:integralIm} indicates that the integrals $I_i$ are fairly well-behaved along the $b$ axis, but they have relatively steep derivatives with respect to $b$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $b$ near zero, or to make some appropriate substitution of variable to make them better behaved. The same caveat applies even more to the behavior of $I_i$ along the $a$ axis near zero.
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Roughness sublayer influence on fluxes and associated variables}
 
 Figures~\ref{fig:solution1} and~\ref{fig:solution2} show the fluxes calculated with roughness sublayer depending on the surface temperature $T_s$, for specified boundary conditions. It should be emphasized that these plots show the solution of \emph{boundary condition} problem: the atmospheric wind velocity and temperatures of the surface and the atmosphere are prescribed, not emerge as a consistent solution of the energy balance and fluxes.
