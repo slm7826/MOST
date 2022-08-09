@@ -33,7 +33,7 @@ cat <<EOF > input.nml
        stable_option = 2
        rich_crit = 1.0
        zeta_trans =  0.5
-       rsl_option = 'ghannam2022'
+       rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
        ! interpolation parameters
 !       a_min=1e-6, a_max=100,   a_nsteps=100
        b_min=-100,  b_max=1000,  b_nsteps=200

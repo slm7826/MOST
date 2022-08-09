@@ -25,7 +25,7 @@ for z0m in 1.0 0.1; do
        stable_option =  2,
        rich_crit = 1.0,
        zeta_trans =  0.5,
-       rsl_option = "ghannam2022"
+       rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
        use_RSL_lookup = F
 /
  &profile_nml
@@ -67,7 +67,7 @@ for z0m in 1.0 0.1; do
        stable_option =  2,
        rich_crit = 1.0,
        zeta_trans =  0.5,
-       rsl_option = "ghannam2022"
+       rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
        use_RSL_lookup = F
 /
  &profile_nml
