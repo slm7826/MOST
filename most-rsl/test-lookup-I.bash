@@ -35,7 +35,7 @@ do
        var='a2', b = $x, x0 = 0.1, x1 = 3.162, nsamples = 500
 /
 EOF
-    echo z_R = $x
+    echo b = $x
     time $codeDir/test_lookup.x > $tmpdir/`printf "%2.2d" $i`.csv
     (( i++ ))
 done
