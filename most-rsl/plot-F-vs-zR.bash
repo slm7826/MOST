@@ -21,6 +21,7 @@ i=1
 # for x in -10.0 -5.0 -1.0 0.0 1.0 5.0 10.0
 for x in 10.0 5.0 1.0 0.0 -1.0 -5.0 -10.0
 do
+   echo L_inv = $x
    cat <<EOF > input.nml
  &monin_obukhov_nml
        stable_option =  2,
@@ -28,9 +29,10 @@ do
        zeta_trans =  0.5
 !       rsl_option = 'ridder2010'
        rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
+       use_RSL_lookup = F
 /
- &input_nml
-       z_a=17.5, z_R=$x, L_inv = $x, k_over_B = 0.0
+ &evaluateF_nml
+       z_a=17.5, L_inv = $x, k_over_B = 0.0
 !       var='z_R', x0 = 0.01, x1=30, nsamples = 200
        var='z_R', x0 = 0.01, x1=200, nsamples = 200
 /

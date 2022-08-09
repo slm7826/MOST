@@ -23,7 +23,7 @@ realclean: clean
 	rm -f input.nml *.out.txt
 
 # dependencies
-$(EXECUTABLES) test_lookup.x : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o
+$(EXECUTABLES) test_lookup.x : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o monin_obukhov_mod.o
 monin_obukhov_functions.o : rsl_functions.o integrate.o
 monin_obukhov_kernel.o    : monin_obukhov_functions.o
 test_integrate.x          : integrate.o

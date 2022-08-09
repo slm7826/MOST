@@ -1,40 +1,12 @@
 program test
   use iso_fortran_env, only : error_unit
 
+  use monin_obukhov_mod
   use rsl_functions_mod
   use monin_obukhov_functions_mod
   use monin_obukhov_kernel
 
   implicit none
-
-  ! + namelists
-  character(32) :: stable_option = '1'
-  real    :: rich_crit      = 2.0
-  real    :: drag_min_heat  = 1.e-05
-  real    :: drag_min_moist = 1.e-05
-  real    :: drag_min_mom   = 1.e-05
-  real    :: zeta_trans     = 0.5
-
-  character(32) :: rsl_option = 'none'
-  real    :: rsl_mu_1 = 0.67 ! parameter of RSL correction
-  real    :: rsl_mu_m = 2.59 ! parameter of RSL momentum correction
-  real    :: rsl_mu_t = 0.95 ! parameter of RSL heat and tracer correction
-  ! parameters of RSL integrals Im and It lookup tables
-  logical :: use_RSL_lookup = .TRUE. !> use loookup tables to compute RSL integrals; otherwise
-                                !! calculate integrals directly: this can be used for, say,
-                                !! testing of quality of lookup in a single point runs, but would
-                                !! very likely be prohibitively slow in global simulations
-  real    :: a_min    = 1e-5    !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
-  real    :: a_max    = 100     !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
-  integer :: a_nsteps = 100     !> number of lookup table steps along the axis a.
-  real    :: b_min    = -10.0   !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
-  real    :: b_max    =  1000.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
-  integer :: b_nsteps = 100     !> number of lookup table steps along the axis b.
-
-  namelist /monin_obukhov_nml/ rich_crit, drag_min_heat, drag_min_moist, drag_min_mom, &
-                               stable_option, zeta_trans, & !miz
-                               rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t, &
-                               use_RSL_lookup, a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
 
   ! sampling parameters
   integer, parameter :: n = 1
@@ -58,8 +30,6 @@ program test
   real    :: zR_inv(n) ! 1/z_R
   real    :: ln_z_z0(n), ln_z_zs(n), zeta0m(n), zeta0s(n), zeta_a(n) ! for MOST integral
   logical, dimension(1) :: mask ! for MOST integral
-  class(most_functions_T), pointer :: most
-  class(rsl_functions_T),  pointer :: rsl
 
   character(512) :: msg
   real :: F_m(n), FF_m(n)
@@ -68,70 +38,38 @@ program test
   ! inputs
   real  :: x
 
+  call monin_obukhov_init()
+
   ! read namelists
   open (701, file='input.nml')
-  read (701, monin_obukhov_nml, iostat=ios, iomsg=msg)
-  if (ios/=0) then
-     write(*,*)'Error reading monin_obukhov_nml ::'//trim(msg)
-     stop 1
-  endif
   read (701, evaluateF_nml, iostat=ios, iomsg=msg)
   if (ios/=0) then
      write(error_unit,*)'Error reading evaluateF_nml ::'//trim(msg)
      stop 1
   endif
-
-  write(*,*)'SETTINGS:'
-  write(*,monin_obukhov_nml)
+  close(701)
   write(*,evaluateF_nml)
-
-  ! set up stability corrections
-  select case(trim(stable_option))
-  case('1')
-     most=>make_most1_functions(rich_crit)
-  case('2')
-     most=>make_most2_functions(rich_crit, zeta_trans)
-  case('brutsaert')
-     most=>make_brutsaert_functions(rich_crit)
-  case('neutral')
-     most => make_neutral_functions(rich_crit)
-  case default
-     write (error_unit,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
-     stop 1
-  end select
-
-  ! set up roughness sublayer (RSL) corrections
-  select case(trim(rsl_option))
-  case('none')
-     rsl=>NULL()
-  case('ridder2010')
-     rsl=>make_rsl_ridder2010_functions(rsl_mu_m,rsl_mu_t)
-  case('ghannam2022')
-     rsl=>make_rsl_ghannam2022_functions(rsl_mu_1,rsl_mu_m,rsl_mu_t)
-  case default
-     write (error_unit,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
-     stop 1
-  end select
-  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Will set up RSL functions'
-  call most%set_rsl_functions(rsl,use_RSL_lookup,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
-  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Did set up RSL functions'
 
   z0s = z0m*exp(-k_over_B) ! roughness length for heat, m
   ln_z_z0 = log(z_a/z0m)
   ln_z_zs = log(z_a/z0s)
 
-  write(*,'(a20," = ",g14.5)') "z0s",z0s
-  write(*,'(a20," = ",g14.5)') "1/L", L_inv
-  write(*,'(a20," = ",g14.5)') "zeta", z_a*L_inv
+  write(*,100) "z0s",z0s
+  write(*,100) "1/L", L_inv
+  write(*,100) "zeta", z_a*L_inv
   zR_inv = 0.0
   where (z_R>0) &
      zR_inv = 1/z_R
-  write(*,'(a20," = ",g14.5)') "z_a/z_R", z_a*zR_inv
-  write(*,'(a20," = ",g14.5)') "z_R/z_a", z_R/z_a
+  write(*,100) "z_a/z_R", z_a*zR_inv
+  write(*,100) "z_R/z_a", z_R/z_a
+100 format(a12," =",g14.5)
 
   mask(:) = .TRUE.
   write(*,*)'RESULTS:'
-  write(*,'(a)')'z_a,z0m,z0s,z_R,1/L,zeta,z_a/z_R,z_R/z_a,MO_integral_m,full_integral_m,rsl_m_ratio,MO_integral_t,full_integral_t,rsl_t_ratio'
+  write(*,'(99(a15,:,","))')'z_a','z0m','z0s','z_R','1/L','zeta','z_a/z_R','z_R/z_a',&
+       'MO_integral_m','full_integral_m','rsl_m_ratio',&
+       'MO_integral_t','full_integral_t','rsl_t_ratio'
+
   do i = 0,nsamples
      x = x0+i*(x1-x0)/nsamples
      select case(var)
@@ -162,7 +100,7 @@ program test
      call most%add_rsl_integral_m(n, mask, L_inv, z0m, z_a, z_R, FF_m, ierr=ierr)
      call most%add_rsl_integral_t(n, mask, L_inv, z0s, z_a, z_R, FF_t, ierr=ierr)
 
-     write(*,'(99(g14.5,:,","))') &
+     write(*,'(99(g15.5,:,","))') &
          z_a, z0m, z0s, z_R, L_inv, z_a*L_inv, z_a*zR_inv, z_R/z_a,&
          F_m, FF_m, FF_m/F_m, &
          F_t, FF_t, FF_t/F_t

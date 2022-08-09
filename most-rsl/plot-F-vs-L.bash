@@ -29,8 +29,9 @@ do
        zeta_trans =  0.5
 !       rsl_option = 'ridder2010'
        rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
+       use_RSL_lookup = F
 /
- &input_nml
+ &evaluateF_nml
        z_a=17.5, z_R=$x, L_inv = 1.0
        var='1/L', x0 = -10, x1=10, nsamples = 200
 /
