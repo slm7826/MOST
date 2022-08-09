@@ -26,15 +26,16 @@ for z0m in 1.0 0.1; do
        rich_crit = 1.0,
        zeta_trans =  0.5,
        rsl_option = "ghannam2022"
+       use_RSL_lookup = F
 /
- &most_nml
+ &profile_nml
        z0m = $z0m
        k_over_B = 2.0
        u_atm = $wind
        t_sfc = $t_sfc
        t_atm = 300.0
        zR    = $zR
-       nsamples = 100
+       z1 = $z0m, nsamples = 100
 /
 EOF
             $codeDir/PROFILE.x > $tmpdir/`printf "%2.2d" $i`.csv
@@ -67,15 +68,16 @@ for z0m in 1.0 0.1; do
        rich_crit = 1.0,
        zeta_trans =  0.5,
        rsl_option = "ghannam2022"
+       use_RSL_lookup = F
 /
- &most_nml
+ &profile_nml
        z0m = $z0m
        k_over_B = 2.0
        u_atm = $wind
        t_sfc = $t_sfc
        t_atm = 300.0
        zR    = $zR
-       nsamples = 100
+       z1 = $z0m, nsamples = 100
 /
 EOF
             $codeDir/PROFILE.x > $tmpdir/`printf "%2.2d" $i`.csv
