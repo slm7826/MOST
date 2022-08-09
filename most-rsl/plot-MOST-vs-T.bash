@@ -24,6 +24,7 @@ for z0m in 1.0 0.1; do
        rich_crit = 1.0,
        zeta_trans =  0.5,
        rsl_option = "ghannam2022"
+       use_RSL_lookup = F
 /
  &most_nml
        z0m = $z0m
