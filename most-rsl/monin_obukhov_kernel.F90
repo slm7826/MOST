@@ -167,7 +167,7 @@ _PURE subroutine monin_obukhov_drag_1d(most, grav, vonkarm,      &
 
      mask_1 = mask .and. rich <  r_crit
      mask_2 = mask .and. rich >= r_crit
-!      write(*,*) rich, r_crit
+
      do i = 1, n
         if(mask_2(i)) then
            drag_m(i)   = drag_min_mom
@@ -252,7 +252,6 @@ _PURE subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small
      zeta = zeta/(1.0 - rich/most%rich_crit)
   end where
 
-!   write(*,'("init", 99(2x,a,"=",g13.6))') 'rich',rich, 'zeta',zeta, 'zeta_min', zeta_min, 'mask_1',mask_1
   iter_loop: do iter = 1, max_iter
      ! handle points in neutral or near-neutral condition. Note that with RSL the profile
      ! is only logarithmic where zR == 0
@@ -315,10 +314,6 @@ _PURE subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small
 
      max_cor= maxval(corr)
 
-!      do i = 1,n
-!         if (mask_1(i)) &
-!              write(*,'(i2,99(2x,a,"=",g13.6))') iter, 'zeta',zeta, 'rich1',rich_1, 'd_rich',d_rich, 'zeta_1',zeta+correction
-!      enddo
      if(max_cor > error) then
         mask_1 = mask_1 .and. (corr > error)
         ! change the mask so computation proceeds only on non-converged points
@@ -338,7 +333,7 @@ end subroutine monin_obukhov_solve_zeta
 _PURE subroutine monin_obukhov_profile_1d(most, &
      vonkarm, &
      & n, zref, zref_t, z, z0, zt, zq, zR, u_star, b_star, q_star, &
-     & del_m, del_t, del_q, ier, avail)
+     & del_m, del_t, del_q, ier, avail, ff_m, ff_m_ref, ff_t, ff_t_ref)
 
   class(most_functions_T), intent(in) :: most
   real   , intent(in   )                :: vonkarm
@@ -349,6 +344,7 @@ _PURE subroutine monin_obukhov_profile_1d(most, &
   real,    intent(  out), dimension(n)  :: del_m, del_t, del_q
   integer, intent(out  )                :: ier
   logical, intent(in   ), dimension(n), optional :: avail ! provided mask
+  real,    intent(  out), dimension(n),optional  :: ff_m, ff_m_ref, ff_t, ff_t_ref
 
   real, dimension(n) :: zeta, zeta_0, zeta_t, zeta_q, zeta_ref, zeta_ref_t, &
        ln_z_z0, ln_z_zt, ln_z_zq, ln_z_zref, ln_z_zref_t,  &
@@ -425,6 +421,10 @@ _PURE subroutine monin_obukhov_profile_1d(most, &
      endwhere
 
   end if
+  if (present(ff_m)) ff_m = f_m
+  if (present(ff_t)) ff_t = f_t
+  if (present(ff_m_ref)) ff_m_ref = f_m_ref
+  if (present(ff_t_ref)) ff_t_ref = f_t_ref
 end subroutine monin_obukhov_profile_1d
 
 end module monin_obukhov_kernel

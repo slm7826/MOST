@@ -25,25 +25,28 @@ program test
   real    :: drag_min_heat  = 1.e-05
   real    :: drag_min_moist = 1.e-05
   real    :: drag_min_mom   = 1.e-05
-  logical :: neutral        = .false.
   real    :: zeta_trans     = 0.5
 
   character(32) :: rsl_option = 'none'
   real    :: rsl_mu_1 = 0.67 ! parameter of RSL correction
   real    :: rsl_mu_m = 2.59 ! parameter of RSL momentum correction
   real    :: rsl_mu_t = 0.95 ! parameter of RSL heat and tracer correction
-  ! parameters of lookup tables for RSL integrals Im and It
-  real    :: a_min    = 0.01  !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
-  real    :: a_max    = 10    !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
-  integer :: a_nsteps = 100   !> number of lookup table steps along the axis a.
-  real    :: b_min    = -10.0 !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
-  real    :: b_max    =  10.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
-  integer :: b_nsteps = 100   !> number of lookup table steps along the axis b.
+  ! parameters of RSL integrals Im and It lookup tables
+  logical :: use_RSL_lookup = .TRUE. !> use loookup tables to compute RSL integrals; otherwise
+                                !! calculate integrals directly: this can be used for, say,
+                                !! testing of quality of lookup in a single point runs, but would
+                                !! very likely be prohibitively slow in global simulations
+  real    :: a_min    = 1e-5    !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
+  real    :: a_max    = 100     !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
+  integer :: a_nsteps = 100     !> number of lookup table steps along the axis a.
+  real    :: b_min    = -10.0   !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
+  real    :: b_max    =  1000.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
+  integer :: b_nsteps = 100     !> number of lookup table steps along the axis b.
 
-  namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
-                               drag_min_moist, drag_min_mom, zeta_trans, &
+  namelist /monin_obukhov_nml/ rich_crit, drag_min_heat, drag_min_moist, drag_min_mom, &
+                               stable_option, zeta_trans, & !miz
                                rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t, &
-                               a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
+                               use_RSL_lookup, a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
 
   real :: p_atm = 1e5
   real :: t_atm = 300.0
@@ -58,9 +61,8 @@ program test
   real :: z1 = 2.0, z2 = 17.5
   integer :: nsamples ! number of intervals
 
-  logical :: do_lookup = .FALSE.
-  namelist /most_nml/ p_atm, t_atm, t_sfc, u_atm, z_atm, z0m, k_over_B, zR, gust_factor, &
-       z1,z2,nsamples,do_lookup
+  namelist /profile_nml/ p_atm, t_atm, t_sfc, u_atm, z_atm, z0m, k_over_B, zR, gust_factor, &
+       z1,z2,nsamples
   ! - end of namelists
   integer :: ios
   integer :: n, i
@@ -69,7 +71,7 @@ program test
   class(rsl_functions_T),  pointer :: rsl
 
   ! inputs
-  real,    dimension(1) :: z, z0, zt, zq, zR1
+  real,    dimension(1) :: z, z0, zt, zq, zR1, L_inv, ff_m, ff_m_ref, ff_t, ff_t_ref
   real    :: zz
   logical :: avail(1)
   ! outputs
@@ -89,15 +91,15 @@ program test
      write (error_unit,'(a)')'Error reading monin_obukhov_nml : '//trim(message)
      stop 1
   endif
-  read (701, most_nml, iostat=ios, iomsg=message)
+  read (701, profile_nml, iostat=ios, iomsg=message)
   if (ios/=0) then
-     write(error_unit,'(a)')'Error reading most_nml : '//trim(message)
+     write(error_unit,'(a)')'Error reading profile_nml : '//trim(message)
      stop 1
   endif
 
   write(*,*)'SETTINGS:'
   write(*,monin_obukhov_nml)
-  write(*,most_nml)
+  write(*,profile_nml)
 
   select case(trim(stable_option))
   case('1')
@@ -111,8 +113,6 @@ program test
      stop 1
   end select
 
-!   most%do_lookup = do_lookup
-
   ! set up roughness sublayer (RSL) corrections
   select case(trim(rsl_option))
   case('none')
@@ -125,7 +125,10 @@ program test
      write (*,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
      stop 1
   end select
-  call most%set_rsl_functions(rsl,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
+
+  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Will set up RSL functions'
+  call most%set_rsl_functions(rsl,use_RSL_lookup,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
+  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Did set up RSL functions'
 
   z0s = z0m*exp(-k_over_B)
   n = 1; avail = .TRUE.
@@ -158,25 +161,41 @@ program test
       gust = 0.
   end where
 
+  L_inv = - vonkarm * b_star/(u_star*u_star)
   write(*,100)'z0m' ,z0
   write(*,100)'z0h' ,zt
+  write(*,100)'a(z_atm)',z_atm/zR
+  write(*,100)'a(z0m)',z0/zR
+  write(*,100)'a(z0h)',zt/zR
+  write(*,100)'b' , zR*L_inv
   write(*,100)'rich' ,rich
   write(*,100)'zeta',zeta
-  write(*,100)'1/L' ,zeta/z
+  write(*,100)'1/L' ,zeta/z_atm
+  write(*,100)'1/L computed' , L_inv
   write(*,100)'u_star' ,u_star
   write(*,100)'b_star' ,b_star
   write(*,100)'flux_t' ,flux_t
   write(*,100)'flux_m' ,flux_m
   write(*,100)'cd_m' ,cd_m
   write(*,100)'cd_t' ,cd_t
-100 format(a12,"=",g14.5)
+100 format(a12," =",g15.6)
+
+  ! values of Fm and Ft do not depend on z, so calculate and print them once
+  zz=z2
+  call monin_obukhov_profile_1d(most, vonkarm, n, &
+     zz, zz, z, z0, zt, zq, zR1, u_star, b_star, b_star, del_m, del_h, del_q, ier, avail, &
+     ff_t=ff_t, ff_m=ff_m)
+  write(*,100)'Fm' ,ff_m
+  write(*,100)'Ft' ,ff_t
 
   write(*,*)'RESULTS:'
-  write(*,'(99(a14,:,","))')'z','u','t','del_m','del_h','ier'
+  write(*,'(99(a14,:,","))')'z','a','u','t','del_m','del_h','Fm','Ft','ier'
   do i = 0,nsamples
      zz = z1+i*(z2-z1)/nsamples
      call monin_obukhov_profile_1d(most, vonkarm, n, &
-        zz, zz, z, z0, zt, zq, zR1, u_star, b_star, b_star, del_m, del_h, del_q, ier, avail)
-     write(*,'(99(g15.6,:,","))') zz, u_atm*del_m, t_atm*del_h+t_sfc*(1-del_h),del_m,del_h, ier
+        zz, zz, z, z0, zt, zq, zR1, u_star, b_star, b_star, del_m, del_h, del_q, ier, avail, &
+        ff_t_ref=ff_t, ff_m_ref=ff_m)
+     write(*,'(99(g15.6,:,","))') zz, zz/zR, u_atm*del_m, t_atm*del_h+t_sfc*(1-del_h),del_m,del_h, &
+        ff_m, ff_t, ier
   enddo
 end program test

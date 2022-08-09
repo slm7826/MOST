@@ -1,4 +1,6 @@
 program test
+  use iso_fortran_env, only : error_unit
+
   use rsl_functions_mod
   use monin_obukhov_functions_mod
   use monin_obukhov_kernel
@@ -11,26 +13,28 @@ program test
   real    :: drag_min_heat  = 1.e-05
   real    :: drag_min_moist = 1.e-05
   real    :: drag_min_mom   = 1.e-05
-  logical :: neutral        = .false.
   real    :: zeta_trans     = 0.5
-!   logical :: new_mo_option  = .false.
 
   character(32) :: rsl_option = 'none'
   real    :: rsl_mu_1 = 0.67 ! parameter of RSL correction
   real    :: rsl_mu_m = 2.59 ! parameter of RSL momentum correction
   real    :: rsl_mu_t = 0.95 ! parameter of RSL heat and tracer correction
-  ! parameters of lookup tables for RSL integrals Im and It
-  real    :: a_min    = 0.01  !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
-  real    :: a_max    = 10    !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
-  integer :: a_nsteps = 100   !> number of lookup table steps along the axis a.
-  real    :: b_min    = -10.0 !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
-  real    :: b_max    =  10.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
-  integer :: b_nsteps = 100   !> number of lookup table steps along the axis b.
+  ! parameters of RSL integrals Im and It lookup tables
+  logical :: use_RSL_lookup = .TRUE. !> use loookup tables to compute RSL integrals; otherwise
+                                !! calculate integrals directly: this can be used for, say,
+                                !! testing of quality of lookup in a single point runs, but would
+                                !! very likely be prohibitively slow in global simulations
+  real    :: a_min    = 1e-5    !> lower lookup table limit for parameter a of I_m and I_h RSL integrals: a_min > 0.
+  real    :: a_max    = 100     !> upper lookup table limit for parameter a of I_m and I_h RSL integrals: a_max > a_min > 0.
+  integer :: a_nsteps = 100     !> number of lookup table steps along the axis a.
+  real    :: b_min    = -10.0   !> lower lookup table limit for parameter b of I_m and I_h RSL integrals.
+  real    :: b_max    =  1000.0 !> upper lookup table limit for parameter b of I_m and I_h RSL integrals
+  integer :: b_nsteps = 100     !> number of lookup table steps along the axis b.
 
-  namelist /monin_obukhov_nml/ stable_option, rich_crit, neutral, drag_min_heat, &
-                               drag_min_moist, drag_min_mom, zeta_trans, &
+  namelist /monin_obukhov_nml/ rich_crit, drag_min_heat, drag_min_moist, drag_min_mom, &
+                               stable_option, zeta_trans, & !miz
                                rsl_option, rsl_mu_1, rsl_mu_m, rsl_mu_t, &
-                               a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
+                               use_RSL_lookup, a_min, a_max, a_nsteps, b_min, b_max, b_nsteps
 
   ! sampling parameters
   real    :: z_a           = 1.0 ! top of the constant flux layer above displacement height, m
@@ -40,7 +44,7 @@ program test
   real    :: x0 ! start of x axis
   real    :: x1 ! end of x axis
   integer :: nsamples ! number of intervals
-  namelist /input_nml/ z_a, z_R, L_inv, &
+  namelist /evaluateI_nml/ z_a, z_R, L_inv, &
        var,x0,x1,nsamples
   ! - end of namelists
   integer :: ios
@@ -57,15 +61,15 @@ program test
      write(*,*)'Error reading monin_obukhov_nml ::'//trim(msg)
      stop 1
   endif
-  read (701, input_nml, iostat=ios, iomsg=msg)
+  read (701, evaluateI_nml, iostat=ios, iomsg=msg)
   if (ios/=0) then
-     write(*,*)'Error reading input_nml ::'//trim(msg)
+     write(error_unit,*)'Error reading evaluateI_nml ::'//trim(msg)
      stop 1
   endif
 
   write(*,*)'SETTINGS:'
   write(*,monin_obukhov_nml)
-  write(*,input_nml)
+  write(*,evaluateI_nml)
 
   ! set up stability corrections
   select case(trim(stable_option))
@@ -78,7 +82,7 @@ program test
   case('neutral')
      most => make_neutral_functions(rich_crit)
   case default
-     write (*,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
+     write (error_unit,*)'stable_option = "'//trim(stable_option)//'" is incorrect'
      stop 1
   end select
 
@@ -91,10 +95,13 @@ program test
   case('ghannam2022')
      rsl=>make_rsl_ghannam2022_functions(rsl_mu_1,rsl_mu_m,rsl_mu_t)
   case default
-     write (*,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
+     write (error_unit,*)'rsl_option = "'//trim(rsl_option)//'" is incorrect'
      stop 1
   end select
-  call most%set_rsl_functions(rsl,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
+
+  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Will set up RSL functions'
+  call most%set_rsl_functions(rsl,use_RSL_lookup,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
+  write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD', 'Did set up RSL functions'
 
   a = z_a/z_R
   b = z_R*L_inv
