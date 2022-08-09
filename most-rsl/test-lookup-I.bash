@@ -25,11 +25,11 @@ do
        stable_option =  2,
        rich_crit = 1.0,
        zeta_trans =  0.5
-!       rsl_option = 'ridder2010'
        rsl_option = 'ghannam2022', rsl_mu_1 = 0.67, rsl_mu_m = 2.0, rsl_mu_t = 1.0
-!       a_nsteps=200
+       a_min=  1.0e-2, a_max=  10.0, a_nsteps=100,
+       b_min= -10.0,   b_max=  10.0, b_nsteps=100,
 /
- &input_nml
+ &lookup_test_nml
 !       var='1/a', b = $x, x0 = 0.1, x1 = 100, nsamples = 200
 !       var='a', b = $x, x0 = 0.1, x1 = 100, nsamples = 500
        var='a2', b = $x, x0 = 0.1, x1 = 3.162, nsamples = 500
