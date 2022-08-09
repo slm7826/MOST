@@ -239,6 +239,8 @@ In unstable regime, stability corrections are the same as in stable option 1, eq
 Note that in stable case, $\fstab_m(\zeta) = \fstab_h(\zeta)$, like they were in \cite{Held2004}.
 $\zeta_t$ is a namelist parameter \verb|zeta_trans| in \verb|monin_obukhov_nml|.
 
+Figure~\ref{fig:stability-corrections} illustrates the behavior of stability functions for this option in stable and unstable conditions.
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \subsection{Brutsaert} \label{sect:option-brutsaert}
 Stability function proposed in \cite{Brutsaert2005} was introduced in the FMS code on branch \verb|usr/slm/sfcx|, together with refactoring of the Monin-Obukhov code to make it easier to expand and manage.
@@ -270,6 +272,8 @@ The complicated form of stable case correction $\fstab_x$ is because a relativel
 \Psi_x = -a_s \ln\big[\zeta + (1+\zeta^{b_s})^{1/b_s}\big]
 \end{equation}
 and then the stability corrections $\fstab_x$ were obtained by differentiation.
+
+Figure~\ref{fig:stability-corrections} illustrates the behavior of stability functions for this option in stable and unstable conditions.
 
 \begin{figure}
    \centering
@@ -984,26 +988,32 @@ Parameter $b = \zR/L$ can be either positive or negative, depending on sign of $
 
 Such a wide range of $b$ makes it difficult to construct a lookup table that covers all possible values with sufficient accuracy. However, in some cases the behavior of $I_i$ at high $b$ is not difficult to evaluate analytically. For example, for stable option 2 the stability correction \eqref{eq:option-2-stable} at high $z' \ge \zeta_t L$ can be written as
 \begin{equation}
-    \fstab_m( z') = \fstab_h(b z') = c_0  + c_1 b z'
+    \fstab_m(b z') = \fstab_h(b z') = c_0  + c_1 b z'
 \end{equation}
 with
 $c_0 = 1 + (5-1/\rcrit) \zeta_t$, and
 $c_1 = 1/\rcrit$
 
-In this range, with Ghannam (2022) stability functions the integral $I$~\eqref{eq:integralI} becomes
+In this range, with Ghannam (2022) stability functions the integral $I_i$~\eqref{eq:integralI} becomes
 \begin{align}\label{eq:b-linearity}
     I_i & = \int_{a}^\infty \frac{(c_0 + c_1 b z')\mu_1 \exp(-\mu_i z')}{z'} dz' \notag \\
         & = c_0 \mu_1 \int_{a}^\infty \frac{\exp(-\mu_i z')}{z'} dz' +
             c_1 \mu_1 b \int_{a}^\infty \exp(-\mu_i z') dz' \notag \\
-        & = f(a) + c_1 b \exp(-\mu_i a)
+        & = c_0 \mu_1 E_1(\mu_i a) + c_1 b \exp(-\mu_i a)
 \end{align}
-That is, it is a linear function of $b$ with coefficients that depend on $a$ and the parameters of stability corrections.
-This expression holds true (and should be exact) for the values of $z_1/L = ba \ge \zeta_t$.
+where $E_1$ is the exponential integral
+\begin{equation}
+    E_1(x) = \int_x^\infty \frac{e^{-t}}{t} dt
+\end{equation}
 
-Alternative stability correction functions --- such as \cite{Brutsaert2005} described in Section~\ref{sect:option-brutsaert} --- may not exhibit such convenient behavior, but then, since they are not linear with $\zeta$ at $\zeta \to \infty$, and the convergence issues described in Section~\ref{sect:convergence} are not likely to arize, one could hope that the maximum values of parameter $b$ would not be so high.
-\todo[inline]{In the code, need a way to detect values of $a$ and $b$ going out of range of reliable estimates: lookup table or lookup table + extrapolation at high $b$.}
+That is, $I_i$ is a linear function of $b$ with coefficients that depend on $a$ and the parameters of stability corrections.
+This expression holds true (and should be exact) for the values of $z_1/L = ba \ge \zeta_t$. In this range of values, linear extrapolation of $I_i$ along $b$ axis should give perfect results.
 
-Figure~\ref{fig:integralIm} indicates that the integrals $I_i$ are fairly well-behaved along the $b$ axis, but they have relatively steep derivatives with respect to $b$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $b$ near zero, or to make some appropriate substitution of variable to make them better behaved. The same caveat applies even more to the behavior of $I_i$ along the $a$ axis near zero.
+\cite{Brutsaert2005} stability function described in Section~\ref{sect:option-brutsaert} saturates at high positive $\zeta$, so it is also near-linear in that range and therefore cal also be conceivably extrapolated at sufficiently high $b$ with sufficient accuracy.
+
+Alternative stability correction functions may not exhibit such convenient behavior, but then, since they are not linear with $\zeta$ at $\zeta \to \infty$, and the convergence issues described in Section~\ref{sect:convergence} are not likely to arize, one could hope that the maximum values of parameter $b$ would not be so high.
+
+Figure~\ref{fig:integralIm} indicates that while the integrals $I_i$ are fairly well-behaved along the $b$ axis, they have relatively steep derivatives with respect to $b$ around zero. That means that to tabulate these integrals with high accuracy we would need either to reduce the step along $b$ near zero, or to make some appropriate substitution of variable to make them better behaved. The same caveat applies even more to the behavior of $I_i$ along the $a$ axis near zero.
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Roughness sublayer influence on fluxes and associated variables}
