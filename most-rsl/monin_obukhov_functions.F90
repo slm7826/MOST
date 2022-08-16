@@ -779,6 +779,9 @@ _PURE subroutine RSL_integral_R_m(most, a1, a2, b, s, ierr)
   real,    intent(out) :: s      ! value of the integral
   integer, intent(out) :: ierr   ! error code
 
+  real, parameter :: A_MID = 1e-1
+  real :: s1
+
   if (.not.associated(most%rsl)) then
      s = 0.0; ierr = 0
      return
@@ -786,7 +789,11 @@ _PURE subroutine RSL_integral_R_m(most, a1, a2, b, s, ierr)
 
   if (a2.ge.RSL_UPPER_LIMIT) then
      ! very large upper limit: treat it as an integral to infinity
-     call integrate_romberg_midpoint_inv(f1,a1,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     call integrate_romberg_midpoint_inv(f1,max(a1,A_MID),RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     if (a1<A_MID) then
+        call integrate_romberg_trapezoid(f1,a1,A_MID,RSL_RTOL,s1,ierr)
+        s = s+s1
+     endif
   else
      call integrate_romberg_trapezoid(f1,a1,a2,RSL_RTOL,s,ierr)
   endif
@@ -820,6 +827,9 @@ _PURE subroutine RSL_integral_R_t(most, a1, a2, b, s, ierr)
   real,    intent(out) :: s      ! value of the integral
   integer, intent(out) :: ierr   ! error code
 
+  real, parameter :: A_MID = 1e-1
+  real :: s1
+
   if (.not.associated(most%rsl)) then
      s = 0.0; ierr = 0
      return
@@ -827,7 +837,11 @@ _PURE subroutine RSL_integral_R_t(most, a1, a2, b, s, ierr)
 
   if (a2.ge.RSL_UPPER_LIMIT) then
      ! very large upper limit: treat it as an integral to infinity
-     call integrate_romberg_midpoint_inv(f1,a1,RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     call integrate_romberg_midpoint_inv(f1,max(a1,A_MID),RSL_UPPER_LIMIT,RSL_RTOL,s,ierr)
+     if (a1<A_MID) then
+        call integrate_romberg_trapezoid(f1,a1,A_MID,RSL_RTOL,s1,ierr)
+        s = s+s1
+     endif
   else
      call integrate_romberg_trapezoid(f1,a1,a2,RSL_RTOL,s,ierr)
   endif
