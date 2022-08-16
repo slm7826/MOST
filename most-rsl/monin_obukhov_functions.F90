@@ -888,11 +888,18 @@ subroutine set_rsl_functions(most, rsl, use_RSL_lookup, a_min, a_max, a_nsteps, 
               most%Im(a_nsteps+1,b_nsteps+1), &
               most%It(a_nsteps+1,b_nsteps+1))
 
-     x0 = sqrt(a_min); x1 = sqrt(a_max)
+!      x0 = sqrt(a_min); x1 = sqrt(a_max)
+!      do i = 1,a_nsteps+1
+!         x = x0+(x1-x0)/a_nsteps*(i-1)
+!         most%a(i) = x**2
+!         most%loga(i) = log(most%a(i))
+!      enddo
+
+     x0 = log(a_min); x1 = log(a_max)
      do i = 1,a_nsteps+1
         x = x0+(x1-x0)/a_nsteps*(i-1)
-        most%a(i) = x**2
-        most%loga(i) = log(most%a(i))
+        most%loga(i) = x
+        most%a(i)    = exp(x)
      enddo
 
      ! NOTE: sign (a, b) returns the absolute value of a times the sign of b
