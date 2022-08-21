@@ -65,8 +65,8 @@ program test
         write (*,*) 'Incorrect sampling variable'
         stop 1
      end select
-     call RSL_integral_I_m(most,a,b,s_m,ierr_m)
-     call RSL_integral_I_t(most,a,b,s_t,ierr_t)
+     call RSL_integral_R_m(most,a,HUGE(1.0),b,s_m,ierr_m)
+     call RSL_integral_R_t(most,a,HUGE(1.0),b,s_t,ierr_t)
      write(*,'(99(g14.5,:,","))') z_a, z_R, L_inv, a, b, z_R/z_a, s_m, s_t, ierr_m, ierr_t
   enddo
 end program test

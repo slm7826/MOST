@@ -312,6 +312,11 @@ _PURE subroutine monin_obukhov_solve_zeta(most, error, zeta_min, max_iter, small
         ! when zeta is small the tolerance is reduced
      end where
 
+     write(*,'(99(a," = ",g14.5,x))') &
+        'iter',iter,'rich',rich,'rich_1',rich_1,'d_rich',d_rich,&
+        'zeta',zeta,'dzeta',correction, &
+        'Fm',f_m,'dFm',df_m,'Ft',f_t,'dFt',df_t, &
+        'a_m', z0/zR, 'a_t',zt/zR,'b',zR*l_inv
      max_cor= maxval(corr)
 
      if(max_cor > error) then
