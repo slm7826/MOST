@@ -3,6 +3,11 @@ EXECUTABLES = MOST.x PROFILE.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F
 TESTS       = test_integrate.x test_lookup.x
 GARBAGE=$(EXECUTABLES) $(TESTS)
 
+# use gfortran by default
+ifndef FC
+    FC := gfortran
+endif
+
 ifeq ($(FC),gfortran)
     FFLAGS = -ffree-line-length-none -fdefault-real-8 -fdefault-double-8 -Waliasing -I.
     # DFLAGS = -Wall -Wno-unused-function -fcheck=all -Wline-truncation  -Wcharacter-truncation  -Wsurprising  -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file -pedantic  -ffpe-trap=invalid,overflow,zero -fbacktrace -finit-real=snan
@@ -10,9 +15,9 @@ ifeq ($(FC),gfortran)
 else ifeq ($(FC),ifort)
     FFLAGS = -O2 -fp-model fast -fpp -Wp,-w -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -i4 -r8 -heap-arrays -g -traceback -I.
     DFLAGS =
+else
+    $(error Not sure what flafs to use for FORTRAN compiler "${FC}". Check your environment variable FC.)
 endif
-
-FC     = gfortran
 
 all: $(EXECUTABLES) $(TESTS)
 
