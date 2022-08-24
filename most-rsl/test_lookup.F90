@@ -90,7 +90,7 @@ program test
      call RSL_integral_R_t (most, a, HUGE(1.0), b, s_t, ierr_t)
 
      call RSL_lookup_I (most, a, b, most%Im, most%pm, si_m, ierr_m)
-     call RSL_lookup_I (most, a, b, most%It, most%pt, si_t, ierr_m)
+     call RSL_lookup_I (most, a, b, most%It, most%pt, si_t, ierr_t)
      a_inv = 0.0;  if (a/=0.0) a_inv = 1/a
      b_inv = 0.0;  if (b/=0.0) b_inv = 1/b
      write(*,'(99(g14.5,:,","))') a, b, a_inv, b_inv, &
