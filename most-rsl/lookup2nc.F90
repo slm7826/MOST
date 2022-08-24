@@ -15,7 +15,7 @@ program test
 
   call monin_obukhov_init()
 
-  call check(nf90_create('lookup.nc',nf90_clobber,ncid))
+  call check(nf90_create('lookup_table.nc',nf90_clobber,ncid))
   call check(nf90_def_dim(ncid,'a',size(most%a),a_dimid))
   call check(nf90_def_dim(ncid,'b',size(most%b),b_dimid))
 

@@ -1,5 +1,5 @@
 # EXECUTABLES = MOST.x phi.x SIM.x
-EXECUTABLES = MOST.x PROFILE.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F.x
+EXECUTABLES = MOST.x PROFILE.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F.x  lookup2nc.x test_lookup_2D.x
 TESTS       = test_integrate.x test_lookup.x lookup2nc.x
 GARBAGE=$(EXECUTABLES) $(TESTS)
 
@@ -31,7 +31,7 @@ realclean: clean
 	rm -f input.nml *.out.txt
 
 # dependencies
-$(EXECUTABLES) test_lookup.x lookup2nc.x : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o monin_obukhov_mod.o
+$(EXECUTABLES) test_lookup.x : integrate.o rsl_functions.o monin_obukhov_kernel.o monin_obukhov_functions.o monin_obukhov_mod.o
 monin_obukhov_functions.o : rsl_functions.o integrate.o
 monin_obukhov_kernel.o    : monin_obukhov_functions.o
 test_integrate.x          : integrate.o
