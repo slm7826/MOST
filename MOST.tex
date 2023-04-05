@@ -200,6 +200,16 @@ and substituting ${\partial u/\partial z}$ from~\eqref{eq:u-profile}
 \begin{equation}
    K_m = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\fstab_m(\zeta)}
 \end{equation}
+
+Likewise,
+\begin{equation}
+   (\overline{\pt'w'}) = K_h \pderiv{\pt}{z} = \ustar\tstar
+\end{equation}
+and from \eqref{eq:b-profile}
+\begin{equation}
+   K_h = \frac{\ustar\tstar}{\partial \pt/\partial z} = \frac{\ustar \vonkarman z}{\fstab_h(\zeta)}
+\end{equation}
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Stability functions}
 Current FMS code (2020.04) can use a number of stability correction functions, controlled by options specified in \verb|monin_obukhov_nml|.
