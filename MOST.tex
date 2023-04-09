@@ -106,6 +106,19 @@ Similarly, temperature scale $\tstar$ is defined by the relationship
    H = \rho_0 c_p (\overline{\pt'w'}) = \rho_0 c_p \tstar \ustar
 \end{equation}
 
+Neglecting the effect of water vapor on density (i.e. virtual temperature effect), buoyancy (the buoyant force per unit mass, or acceleration due to buoyant force) is defined as
+\begin{equation}
+    b = g \frac{\theta - \theta_0}{\theta_0}
+\end{equation}
+where $\theta$ is the potential temperature and $\theta_0$ is constant reference value. Buoyancy flux [\si{\kg\per\m\per\s\cubed}] and buoyancy scale $\bstar$ [\si{\m\per\s\squared}] are then defined by the relationship
+\begin{equation}
+    B = \rho_0 \overline{b' w'} = \rho_0 \ustar \bstar
+\end{equation}
+so that
+\begin{equation}
+    H = \frac{c_p \theta_0}{g} B
+\end{equation}
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Dimensional reasoning}
 
@@ -118,7 +131,9 @@ In the neutral case, far from the wall (where the viscosity effects can be impor
 Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was first introduced into the equation for $L$ by Obukhov in 1946 and has usually been preserved in all subsequent works by tradition. $L>0$ for stable situations.
 
 \subsection{Stratified flow}
-The statistics of the flow in the near-surface layer can only depend on small number of parameters that appear in the above section, namely on temperature-to-buoyancy scale $g/\pt_0$, density $\rho_0$, fluxes of momentum $\tau$ (or, equivalently, velocity scale $\ustar$) and temperature $H/(\rho_0 c_p)=\overline{\pt'w'}$, and $z$. Units of these quantities are
+The statistics of the flow in the near-surface layer can only depend on small number of parameters that appear in the above section, namely on temperature-to-buoyancy scale $g/\pt_0$, density $\rho_0$, fluxes of momentum $\tau$ (or, equivalently, velocity scale $\ustar$) and temperature $H/(\rho_0 c_p)=\overline{\pt'w'}$, and $z$.
+
+Units of these quantities are
 \begin{equation}
     \left[\frac{g}{\pt_0}\right] = \si{\per\K\m\per\s\squared}; \quad
     \left[\rho_0\right] = \si{\kg\per\m\cubed}; \quad
@@ -126,7 +141,7 @@ The statistics of the flow in the near-surface layer can only depend on small nu
     \left[\overline{\pt'w'}\right] = \si{\K\m\per\s}
 \end{equation}
 
-There is only one way (to the arbitrary power) to combine the above parameters to construct the values of length dimension:
+There is only one way to combine the above parameters to construct the values of length dimension:
 \begin{equation}
     \left[\frac{g}{\pt_0}\right]^{n_1}
     \left[\rho_0\right]^{n_2}
@@ -134,12 +149,13 @@ There is only one way (to the arbitrary power) to combine the above parameters t
     \left[\overline{\pt'w'}\right]^{n_4} = [z]
 \end{equation}
 and that is
-\begin{equation}
+\begin{equation}\label{eq:mo-length}
    L = - \frac{\ustar^3}{\vonkarman\frac{g}{\pt_0}(\overline{\pt'w'})}
-     = \frac{\ustar^2}{\vonkarman\frac{g}{\pt_0}\tstar}
+     = - \frac{\ustar^2}{\vonkarman\frac{g}{\pt_0}\tstar}
+     = - \frac{\ustar^2}{\vonkarman\bstar}
 \end{equation}
 %
-$L$ is negative for unstable cases, positive in stable conditions, infinite in neutral.
+$L$ is negative for unstable cases, positive in stable conditions, infinite in neutral. To quote \cite{Held2004}, for $z < -L$, the turbulence is primarily driven mechanically, and for $z > -L$ it is primarily driven by buoyancy.
 
 In non-neutral case,
 \begin{equation}\label{eq:u-profile}
@@ -724,8 +740,10 @@ This treatment should ensure the same asymptotic behavior as imposing the above 
 Roughness sublayer formulations need to introduce another length scale into consideration -- roughness sublayer depth $\zR$. The equation for vertical profile~\eqref{eq:u-profile} and~\eqref{eq:b-profile} then transform to
 \begin{subequations}\label{eq:profile-rsl}
 \begin{align}
-   \frac{\vonkarman z}{\ustar}\pderiv{u}{z} & = \fstab_m(z/L)\frsl_m(z/\zR) \\
-   \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} & = \fstab_h(z/L)\frsl_h(z/\zR)
+    \frac{\vonkarman z}{\ustar}\pderiv{u}{z} & = \fstab_m(z/L)\frsl_m(z/\zR)
+        \label{eq:profile-rsl-m}
+    \\
+    \frac{\vonkarman z}{\tstar}\pderiv{\pt}{z} & = \fstab_h(z/L)\frsl_h(z/\zR)
 \end{align}
 \end{subequations}
 
@@ -762,12 +780,58 @@ and substituting ${\partial u/\partial z}$ and ${\partial \pt/\partial z}$ from~
 %
 \begin{subequations}
 \begin{align}
-   K_m & = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\fstab_m(z/L)\frsl_m(z/z_R)}
+   K_m & = \frac{\ustar^2}{\partial u/\partial z} = \frac{\ustar \vonkarman z}{\fstab_m(z/L)\frsl_m(z/z_R)} \label{eq:Km-rsl}
    \\
    K_h & = \frac{\ustar\tstar}{\partial \pt/\partial z} = \frac{\ustar \vonkarman z}{\fstab_h(z/L)\frsl_h(z/\zR)}
 \end{align}
 \end{subequations}
 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\subsection{Stable mix}
+
+Following Section 4 (Diffusion Coefficients) and Section 5 (Implementation Notes) of \cite{Held2004}, we need to evaluate the stable diffusion coefficient scaling factor $f(\rich)$  \cite[Eq. (45) of][]{Held2004} to provide it to the atmospheric turbulence module.
+
+The idea is that $f$ is a scaling function such that the vertical diffusion coefficient $K$ (assumed to be the same for momentum and heat) is
+\begin{equation}
+    K = (\vonkarman z)^2 \left| \pderiv{u}{z}\right| f
+\end{equation}
+
+In \cite{Held2004}, $f$ is a function of Richardson number $\rich$ only; with RSL corrections $f$ would also depend on roughness sublayer length scale and height.
+
+From equation~\eqref{eq:profile-rsl-m}
+\begin{equation}
+    \ustar = \frac{\vonkarman z}{\fstab_m(z/L)\frsl_m(z/\zR)} \pderiv{u}{z}
+\end{equation}
+and then from equation~\eqref{eq:Km-rsl}
+\begin{equation}
+    K = \frac{(\vonkarman z)^2}{\fstab_m^2(z/L)\frsl_m^2(z/\zR)} \pderiv{u}{z}
+\end{equation}
+
+Therefore
+\begin{equation}
+    f = \frac{1}{\fstab_m^2(z/L)\frsl_m^2(z/\zR)}
+\end{equation}
+
+On the other hand, Richardson number
+\begin{equation}
+    \rich = \frac{g}{\pt}\pderiv{\pt}{z} \Big(\pderiv{u}{z}\Big)^{-2}
+    = \frac{g\tstar\vonkarman z}{\pt\ustar^2}
+      \frac{\fstab_h(z/L)\frsl_h(z/\zR)}{\fstab_m^2(z/L)\frsl_m^2(z/\zR)}
+    = \frac{z}{L}
+      \frac{\fstab_h(z/L)\frsl_h(z/\zR)}{\fstab_m^2(z/L)\frsl_m^2(z/\zR)}
+\end{equation}
+where we used equations~\eqref{eq:profile-rsl} and \eqref{eq:mo-length}. Following \cite{Held2004} assumption that $\fstab_h = \fstab_m$,
+\begin{equation}
+    \rich = \frac{\zeta}{\fstab_m(\zeta)} \frac{\frsl_h(z/\zR)}{\frsl_m^2(z/\zR)}
+\end{equation}
+or, equivalently,
+\begin{equation}\label{eq:zeta-from-rich}
+    \rich\frac{\frsl_m^2(z/\zR)}{\frsl_h(z/\zR)} = \frac{\zeta}{\fstab_m(\zeta)}
+\end{equation}
+
+This is completely equivalent to equation~(48) of \cite{Held2004}, except in the left-hand side $\rich$ is scaled with ratio of RSL correction functions.
+
+So, to calculate \verb|stable_mix| correction $f$, atmosphere would provide $\rich$ and $z/\zR$, then in the MOST module the left-hand-side of equation~\eqref{eq:zeta-from-rich} would be calculated, and then the original $f(\rich)$ is evaluated; after that it is scaled by $\frsl_m^{-2}(z/\zR)$ and returned as a final value.
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Solving for surface fluxes with RSL}
 
