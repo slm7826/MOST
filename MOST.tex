@@ -59,6 +59,9 @@ rightline=false
 \newlength{\panelW}
 \setlength{\panelW}{7.8cm}
 
+\newlength{\panelM}
+\setlength{\panelM}{6cm}
+
 \newlength{\panelS}
 \setlength{\panelS}{4cm}
 
@@ -832,6 +835,36 @@ or, equivalently,
 This is completely equivalent to equation~(48) of \cite{Held2004}, except in the left-hand side $\rich$ is scaled with ratio of RSL correction functions.
 
 So, to calculate \verb|stable_mix| correction $f$, atmosphere would provide $\rich$ and $z/\zR$, then in the MOST module the left-hand-side of equation~\eqref{eq:zeta-from-rich} would be calculated, and then the original $f(\rich)$ is evaluated; after that it is scaled by $\frsl_m^{-2}(z/\zR)$ and returned as a final value.
+
+Figure~\ref{fig:stable-mix} shows the dependence f stable mix factor $f$ on few parameters for a number of roughness sublayer thickness values.
+
+\begin{figure}
+    \centering
+    \subfloat[$f(\rich)$ for $z=\SI{17.5}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-rich/zAtm17.5/mix-vs-rich.pdf}
+    }
+    \subfloat[$f(z)$ for $\zR=\SI{50}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-z/zR50.0/mix-vs-z.pdf}
+    }
+
+    \subfloat[$f(\rich)$ for $z=\SI{50}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-rich/zAtm50/mix-vs-rich.pdf}
+    }
+    \subfloat[$f(z)$ for $\zR=\SI{20}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-z/zR20.0/mix-vs-z.pdf}
+    }
+
+    \subfloat[$f(\rich)$ for $z=\SI{100}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-rich/zAtm100/mix-vs-rich.pdf}
+    }
+    \subfloat[$f(z)$ for $\zR=\SI{5}{\m}$]{
+        \includegraphics[width=\panelM]{most-rsl/output/stable_mix/vs-z/zR5.0/mix-vs-z.pdf}
+    }
+
+    \caption[Stable mix factor]{Dependence of stable mix factor on Richardson number and height for different roughness sublayer parameters. $z$ in \si{\m}.}
+    \label{fig:stable-mix}
+\end{figure}
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Solving for surface fluxes with RSL}
 
