@@ -87,7 +87,9 @@ program test
   gust = 0.0
 
   write(*,*) 'RESULTS:'
-  write(*,'(a)') 'Time,Ts,Ta,rnet,swnet,lwdn,lwup,lwnet,shflx,rnet0,lwup0,lwnet0,shflx0,rho,CD_t,CD_m,rho_CD_U,gust,wind,ustar,bstar,rich,zeta'
+  write(*,'(99(a14,:,","))') 'Time','Ts','Ta','rnet','swnet','lwdn','lwup','lwnet','shflx',&
+            'rnet0','lwup0','lwnet0','shflx0','rho','CD_t','CD_m','rho_CD_U','gust','wind',&
+            'ustar','bstar','rich','zeta'
 
   time = 0.0
   Ts = t_atm_ave
