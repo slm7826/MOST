@@ -92,4 +92,55 @@ subroutine monin_obukhov_init()
   call most%set_rsl_functions(rsl,use_RSL_lookup,a_min,a_max,a_nsteps,b_min,b_max,b_nsteps)
   write(error_unit, *)'MONIN_OBUKHOV_INIT in MONIN_OBUKHOV_MOD :: Did set up RSL functions'
 end subroutine monin_obukhov_init
+
+!=======================================================================
+subroutine stable_mix(rich, z_ag, rsl_scale, mix)
+
+real, intent(in) , dimension(:,:,:)  :: rich      ! Richardson number
+real, intent(in) , dimension(:,:,:)  :: z_ag      ! height above ground, m
+real, intent(in) , dimension(:,:)    :: rsl_scale ! roughness sublayer scale, m
+real, intent(out), dimension(:,:,:)  :: mix       !
+
+integer :: i,j,k,n
+integer :: ier ! error code returned by most%stable_mix
+real, dimension(size(rich,1),size(rich,2),size(rich,3)) :: &
+    pm2, & ! RSL correction for momentum squared
+    Ri     ! Richardson number scaled with RSL corrections
+real :: pt ! RSL correction for heat
+
+! if(size(rich,3).ne.size(z_ag,3)) call error_mesg('stable_mix_3d in monin_obukhov_mod', &
+!      'vertical sizes of "rich" ('//string(size(rich,3))//') and "z_ag" (' &
+!      //string(size(z_ag,3))//') are inconsistent', FATAL)
+
+n = size(rich,1)*size(rich,2)*size(rich,3)
+
+if(associated(most%rsl)) then
+  ! scale Richardson number with roughness sublayer corrections, where necessary
+  do j = 1,size(rich,2)
+  do i = 1,size(rich,1)
+    if (rsl_scale(i,j)>0.0) then
+      do k = 1,size(rich,3)
+        pm2(i,j,k) = most%rsl%rsl_m(z_ag(i,j,k)/rsl_scale(i,j))**2
+        pt         = most%rsl%rsl_t(z_ag(i,j,k)/rsl_scale(i,j))
+        Ri (i,j,k) = rich(i,j,k) * pm2(i,j,k)/pt
+      enddo
+    else
+      pm2(i,j,:) = 1.0
+      Ri (i,j,:) = rich(i,j,:)
+    endif
+  enddo
+  enddo
+
+  call most%stable_mix(n, Ri, mix, ier)
+
+  ! scale mixing factor with roughness sublayer correction
+  mix(:,:,:) = mix(:,:,:)/pm2(:,:,:)
+else
+  call most%stable_mix(n, rich, mix, ier)
+endif
+
+! if (ier.ne.0) call error_mesg('stable_mix_3d in monin_obukhov_mod', &
+!      'stable_mix calculations for stable_option "'//trim(stable_option)//'" returned an error', FATAL)
+
+end subroutine stable_mix
 end module
