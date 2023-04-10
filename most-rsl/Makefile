@@ -1,5 +1,5 @@
 # EXECUTABLES = MOST.x phi.x SIM.x
-EXECUTABLES = MOST.x PROFILE.x SIMULATOR.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F.x  lookup2nc.x test_lookup_2D.x
+EXECUTABLES = MOST.x PROFILE.x SIMULATOR.x STABLE_MIX.x evaluate_RSL_I.x evaluate_RSL_I2.x evaluate_RSL_F.x  lookup2nc.x test_lookup_2D.x
 TESTS       = test_integrate.x test_lookup.x lookup2nc.x
 GARBAGE=$(EXECUTABLES) $(TESTS)
 
