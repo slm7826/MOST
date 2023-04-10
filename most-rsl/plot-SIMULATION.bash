@@ -34,6 +34,8 @@ cat <<EOF > input.nml
     wind_atm    = 2.000000
     z_atm       = 17.50000
     z0m         = 1.000000
+    rh_atm      = 1.0
+    beta        = 1.0
     k_over_b    = 2.0
     zR          = 1.0
     dt          = 1800.000
@@ -46,7 +48,7 @@ EOF
 $codeDir/SIMULATOR.x > $tmpdir/SIM.csv
 commonFlags="--x=Time --label=var-name --xlab=None --xlim=0.5:2.5 --width=12 --aspect=0.2"
 $tooldir/plot.py $commonFlags --var=Ts,Ta             --ylab=degK --save=$outdir/temp.pdf   $tmpdir/SIM.csv
-$tooldir/plot.py $commonFlags --var=swnet,lwnet,shflx --ylab=W/m2 --save=$outdir/fluxes.pdf $tmpdir/SIM.csv
+$tooldir/plot.py $commonFlags --var=swnet,lwnet,shflx,lhflx --ylab=W/m2 --save=$outdir/fluxes.pdf $tmpdir/SIM.csv
 $tooldir/plot.py $commonFlags --var=cd_m,cd_t                     --save=$outdir/CD.pdf     $tmpdir/SIM.csv
 # $tooldir/plot.py $commonFlags --var=ustar             --ylab=m/s  --save=$outdir/ustar.pdf  $tmpdir/SIM.csv
 # $tooldir/plot.py $commonFlags --var=bstar                         --save=$outdir/bstar.pdf  $tmpdir/SIM.csv
