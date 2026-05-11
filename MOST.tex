@@ -95,6 +95,19 @@ Similarly, temperature scale $\tstar$ is defined by the relationship
    H = \rho_0 c_p (\overline{\pt'w'}) = \rho_0 c_p \tstar \ustar
 \end{equation}
 
+Neglecting the effect of water vapor on density (i.e. virtual temperature effect), buoyancy (the buoyant force per unit mass, or acceleration due to buoyant force) is defined as
+\begin{equation}
+    b = g \frac{\theta - \theta_0}{\theta_0}
+\end{equation}
+where $\theta$ is the potential temperature and $\theta_0$ is constant reference value. Buoyancy flux [\si{\kg\per\m\per\s\cubed}] and buoyancy scale $\bstar$ [\si{\m\per\s\squared}] are then defined by the relationship
+\begin{equation}\label{eq:bstar}
+    B = \rho_0 \overline{b' w'} = \rho_0 \ustar \bstar
+\end{equation}
+so that
+\begin{equation}
+    H = \frac{c_p \theta_0}{g} B
+\end{equation}
+
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 \section{Dimensional reasoning}
 
@@ -104,7 +117,7 @@ In the neutral case, far from the wall (where the viscosity effects can be impor
    \pderiv{u}{z} = \frac{\ustar}{\vonkarman z}
 \end{equation}
 
-Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was first introduced into the equation for $L$ by Obukhov in 1946 and has usually been preserved in all subsequent works by tradition. $L>0$ for stable situations.
+Per \cite{Monin1971}, the dimensionless von Karman constant $\vonkarman$ was first introduced into the equation for $L$ by Obukhov in 1946 and has usually been preserved in all subsequent works by tradition.
 
 \subsection{Stratified flow}
 The statistics of the flow in the near-surface layer can only depend on small number of parameters that appear in the above section, namely on temperature-to-buoyancy scale $g/\pt_0$, density $\rho_0$, fluxes of momentum $\tau$ (or, equivalently, velocity scale $\ustar$) and temperature $H/(\rho_0 c_p)=\overline{\pt'w'}$, and $z$. Units of these quantities are
@@ -116,7 +129,7 @@ The statistics of the flow in the near-surface layer can only depend on small nu
 \end{equation}
 
 There is only one way (to the arbitrary power) to combine the above parameters to construct the values of length dimension:
-\begin{equation}
+\begin{equation}\label{eq:length-dim}
     \left[\frac{g}{\pt_0}\right]^{n_1}
     \left[\rho_0\right]^{n_2}
     \left[\ustar\right]^{n_3}
@@ -129,7 +142,19 @@ and that is
 \end{equation}
 %
 $L$ is negative for unstable cases, positive in stable conditions, infinite in neutral.
+\begin{mdframed}
+The system of equations for powers of different units in equation~\eqref{eq:length-dim} is
+\begin{subequations}
+\begin{align}
+ -n_1 + n_4 &= 0              & & \text{for }\si{\K}\\
+ n_1 - 3 n_2 + n_3 + n_4 &= 1 & & \text{for }\si{\m}\\
+ n_2 &= 0                     & & \text{for }\si{\kg}\\
+ -2 n_1 - n_3 -n_4 &= 0       & & \text{for }\si{\s}
+\end{align}
+\end{subequations}
 
+Than gives $n_1 = n_4 = -1$, and $n_3 = +3$; $n_2 = 0$ per the equation above.
+\end{mdframed}
 In non-neutral case,
 \begin{equation}\label{eq:u-profile}
    \frac{\vonkarman z}{\ustar}\pderiv{u}{z} = \fstab_m(\zeta)
