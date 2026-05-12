@@ -45,10 +45,11 @@ program test
   real :: lwdn      = 200.0   ! downward long-wave
   real :: cap       = 0.0     ! surface heat capacity, J/(m2 K)
   real :: gust_factor = 0.0   ! gustiness factor
+  integer :: n_gust_iter = 1  ! number of gustiness iterations
 
   namelist /idealized_nml/ p_atm, t_atm_ave, t_atm_range, t_atm_shift, &
       wind_atm, z_atm, z0m, k_over_B, &
-      dt, swnet_max, lwdn, cap, gust_factor
+      dt, swnet_max, lwdn, cap, gust_factor, n_gust_iter
   ! - end of namelists
 
   integer :: io
@@ -57,11 +58,11 @@ program test
   real, dimension(1) :: rho, rho_drag, gust
 
   ! inputs
-  real, dimension(1) :: Ta, Ts0, z, z0, zt, zq, wind
+  real, dimension(1) :: Ta, Ts0, z, z0, zt, zq, wind, gust0
   logical :: avail(1), lavail
   ! outputs
   real,    dimension(1) :: drag_m, drag_t, drag_q, u_star, b_star, rich, zeta
-  integer :: ier
+  integer :: ier, i
 
   real :: time ! seconds
   real :: Ts, delta_Ts ! surface temperature and its time step tendency
@@ -102,14 +103,25 @@ program test
      Ts0 = Ts
      Ta  = t_atm_ave - 0.5*t_atm_range*sin(2*pi*(time/day-t_atm_shift/24.0))
 
-     wind = sqrt(wind_atm**2 + gust**2)
+     do i = 1,n_gust_iter
+        gust0 = gust
+        wind = sqrt(wind_atm**2 + gust**2)
 
-     call monin_obukhov_drag_1d(grav, vonkarm,               &
-          & error, zeta_min, max_iter, small,                         &
-          & neutral, stable_option, new_mo_option, rich_crit, zeta_trans, &!miz
-          & drag_min_heat, drag_min_moist, drag_min_mom,              &
-          & n, Ta, Ts0, z, z0, zt, zq, wind, drag_m, drag_t,         &
-          & drag_q, u_star, b_star, rich, zeta, lavail, avail, ier)
+        call monin_obukhov_drag_1d(grav, vonkarm,               &
+             & error, zeta_min, max_iter, small,                         &
+             & neutral, stable_option, new_mo_option, rich_crit, zeta_trans, &!miz
+             & drag_min_heat, drag_min_moist, drag_min_mom,              &
+             & n, Ta, Ts0, z, z0, zt, zq, wind, drag_m, drag_t,         &
+             & drag_q, u_star, b_star, rich, zeta, lavail, avail, ier)
+        ! re-calculate gustiness for the next iteration, using u_star and b_star that was
+        ! just calculated
+        where (b_star > 0.)
+            gust = gust_factor * (u_star*b_star*gust_zi)**(1./3.)
+        else where
+            gust = 0.
+        end where
+     end do
+
      rho = p_atm / (rdgas * Ta(1)) ! density
      rho_drag = cp_air * drag_t * rho * wind_atm
      ! solve the linearized energy balance implicitly
@@ -123,14 +135,7 @@ program test
      time  = time+dt
      write(*,'(99(g14.5,:,","))') time/day, Ts, Ta, rnet, swnet, lwdn, lwup, lwdn-lwup, shflx, &
             rnet0,lwup0,lwdn-lwup0,shflx0, &
-            rho, drag_t, drag_m, rho_drag, gust, wind, u_star, b_star, rich, zeta
-
-     ! calculate gustiness
-     where (b_star > 0.)
-         gust = gust_factor * (u_star*b_star*gust_zi)**(1./3.)
-     else where
-         gust = 0.
-     end where
+            rho, drag_t, drag_m, rho_drag, gust0, wind, u_star, b_star, rich, zeta
 
   enddo
 end program test
