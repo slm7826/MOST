@@ -2,6 +2,8 @@ EXECUTABLES = MOST.x SIM.x
 
 GARBAGE=$(EXECUTABLES)
 
+FC     = gfortran
+
 ifeq ($(FC),gfortran)
     FFLAGS = -ffree-line-length-none -fdefault-real-8 -fdefault-double-8 -Waliasing -I.
     # DFLAGS = -Wall -Wno-unused-function -fcheck=all -Wline-truncation  -Wcharacter-truncation  -Wsurprising  -Waliasing  -Wimplicit-interface  -Wunused-parameter  -fwhole-file -pedantic  -ffpe-trap=invalid,overflow,zero -fbacktrace -finit-real=snan
@@ -11,7 +13,6 @@ else ifeq ($(FC),ifort)
     DFLAGS =
 endif
 
-FC     = gfortran
 
 all: $(EXECUTABLES) $(TESTS)
 
