@@ -79,15 +79,19 @@ and continuity equation in approximation of incompressible liquid
 where $\pt$ is potential temperature, $\pt'$ is the departure from mean, and $p'$ is the departure from hydrostatics.
 Viscosity terms in the right-hand side are typically neglected.
 
-Fluxes of momentum and heat within constant flux layer
-\begin{gather}
-   \tau = \rho_0 (\overline{u'w'}) = \text{const}_1 \\
+The downward flux of momentum within constant flux layer is
+\begin{equation}
+   \tau = - \rho_0 (\overline{u'w'}) = \text{const}_1 \\
+\end{equation}
+
+Likewise, the upward flux of heat in the same layer of constant fluxes is
+\begin{equation}
    H = \rho_0 c_p (\overline{\pt'w'}) = \text{const}_2
-\end{gather}
+\end{equation}
 
 Friction velocity scale $\ustar$ is defined by the momentum sink at the surface,
 \begin{equation}
-   \tau = \rho_0 (\overline{u'w'}) = \rho_0 \ustar^2
+   \tau = - \rho_0 (\overline{u'w'}) = \rho_0 \ustar^2
 \end{equation}
 
 Similarly, temperature scale $\tstar$ is defined by the relationship
@@ -138,7 +142,7 @@ There is only one way (to the arbitrary power) to combine the above parameters t
 and that is
 \begin{equation}
    L = - \frac{\ustar^3}{\vonkarman\frac{g}{\pt_0}(\overline{\pt'w'})}
-     = \frac{\ustar^2}{\vonkarman\frac{g}{\pt_0}\tstar}
+     = - \frac{\ustar^2}{\vonkarman\frac{g}{\pt_0}\tstar}
 \end{equation}
 %
 $L$ is negative for unstable cases, positive in stable conditions, infinite in neutral.
