@@ -48,3 +48,4 @@ $tooldir/plot.py $commonFlags --var=CD_m,CD_t                     --save=$outdir
 # $tooldir/plot.py $commonFlags --var=bstar                         --save=$outdir/bstar.pdf  $tmpdir/SIM.csv
 $tooldir/plot.py $commonFlags --var=ustar,bstar       --ylab=ustar,bstar  --save=$outdir/ustar.pdf  $tmpdir/SIM.csv
 $tooldir/plot.py $commonFlags --var=rich,zeta         --ylab=rich,zeta    --save=$outdir/rich.pdf   $tmpdir/SIM.csv
+$tooldir/plot.py $commonFlags --var=wind,gust         --ylab=m/s    --save=$outdir/wind.pdf   $tmpdir/SIM.csv
