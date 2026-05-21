@@ -148,21 +148,24 @@ program test
      B(iTc)     = Hg0 - Ha0
      A(iTg,iTc) = DHgDTc
      A(iTg,iTg) = cap_g/dt + DHgDTg + DRDT
-     B(iTc)     = rnet0 - Hg0
+     B(iTg)     = rnet0 - Hg0
      ! solve the system
      det      = A(iTc,iTc)*A(iTg,iTg) - A(iTc,iTg)*A(iTg,iTc)
      delta_Tc = (B(iTc)*A(iTg,iTg) - B(iTg)*A(iTg,iTc))/det
      delta_Tg = (A(iTc,iTc)*B(iTg) - A(iTc,iTg)*B(iTc))/det
+!      write(*,*) det, delta_Tc, delta_Tg
+!      write(*,*) A
+!      write(*,*) B
 
      ! updated values of the fluxes
-     shflx = shflx0 + rho_drag(1) * delta_Tc
+     shflx = Ha0 + DHaDTc * delta_Tc
      lwup  = lwup0  + DRDT        * delta_Tg
      rnet  = swnet  + lwdn - lwup
      Tc    = Tc + delta_Tc
      Tg    = Tg + delta_Tg
      time  = time+dt
      write(*,'(99(g14.5,:,","))') time/day, Tg, Tc, Ta, rnet, swnet, lwdn, lwup, lwdn-lwup, shflx, &
-            rnet0,lwup0,lwdn-lwup0,shflx0, &
+            rnet0,lwup0,lwdn-lwup0,Ha0, &
             rho, drag_t, drag_m, rho_drag, gust, wind, u_star, b_star, rich, zeta
 
   enddo
