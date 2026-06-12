@@ -88,7 +88,7 @@ program test
 
   real :: lwup0, rnet0 ! fluxes before implicit time step
   real :: lwup  ! final vales of the fluxes
-  ! read namelists
+  ! read the namelists
   open (701, file='input.nml')
   read (701, monin_obukhov_nml, iostat=io)
   read (701, idealized_nml,     iostat=io)
